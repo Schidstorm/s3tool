@@ -11,42 +11,11 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/aws/smithy-go"
-	"github.com/aws/smithy-go/logging"
-	"github.com/rs/zerolog"
 )
-
-func New() (*s3.Client, error) {
-	zerolog.SetGlobalLevel(zerolog.TraceLevel)
-	logger := zerolog.New(os.Stderr).With().Timestamp().Logger()
-	zerolog.DefaultContextLogger = &logger
-
-	ctx := context.Background()
-	sdkConfig, err := config.LoadDefaultConfig(ctx, config.WithLogger(AwsLogger(zerolog.DefaultContextLogger)))
-	if err != nil {
-		return nil, err
-	}
-	return s3.NewFromConfig(sdkConfig, func(o *s3.Options) {
-		o.UsePathStyle = true // Important for MinIO
-	}), nil
-}
-
-func AwsLogger(logger *zerolog.Logger) logging.LoggerFunc {
-	return func(classification logging.Classification, format string, v ...any) {
-		switch classification {
-		case logging.Warn:
-			logger.Warn().Msgf(format, v...)
-		case logging.Debug:
-			logger.Debug().Msgf(format, v...)
-		default:
-			logger.Info().Msgf(format, v...)
-		}
-	}
-}
 
 // ListBuckets lists the buckets in the current account.
 func ListBuckets(s3Client *s3.Client, ctx context.Context) ([]types.Bucket, error) {

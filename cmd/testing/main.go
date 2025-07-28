@@ -8,6 +8,7 @@ import (
 )
 
 func main() {
+
 	flex := tview.NewFlex()
 	flex.SetDirection(tview.FlexRow)
 

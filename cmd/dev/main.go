@@ -1,19 +1,21 @@
 package main
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/schidstorm/s3tool/pkg/boxes"
-	"github.com/schidstorm/s3tool/pkg/s3lib"
+	"github.com/schidstorm/s3tool/pkg/cli"
 )
 
 func main() {
-	client, err := s3lib.New()
+	err := cli.Parse(os.Args[1:])
 	if err != nil {
-		panic(err)
+		fmt.Fprintf(os.Stderr, "Error parsing CLI arguments: %v\n", err)
+		os.Exit(1)
 	}
 
-	box := boxes.NewBucketsBox(client)
-	app := boxes.NewApp()
-	app.OpenPage(box)
+	app := boxes.NewApp(nil)
 
 	app.Run()
 }

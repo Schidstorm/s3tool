@@ -9,7 +9,7 @@ type App struct {
 	root *RootPage
 }
 
-func NewApp() *App {
+func NewApp(page PageContent) *App {
 	root := NewRootPage()
 	app := &App{
 		root:        root,
@@ -17,6 +17,11 @@ func NewApp() *App {
 	}
 
 	activeApp = app
+	if page != nil {
+		root.OpenPage(page)
+	} else {
+		root.OpenPage(NewContextPage())
+	}
 
 	return app
 }
