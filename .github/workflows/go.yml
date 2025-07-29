@@ -3,6 +3,10 @@
 
 name: Go
 
+env:
+  RENOVATE_TOKEN: ${{ secrets.RENOVATE_TOKEN }}
+  RENOVATE_CONFIG_FILE: ${{env.RENOVATE_CONFIG_FILE}}
+
 on:
   push:
     branches: [ "main" ]
