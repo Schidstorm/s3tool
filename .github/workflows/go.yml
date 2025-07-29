@@ -5,7 +5,7 @@ name: Go
 
 env:
   RENOVATE_TOKEN: ${{ secrets.RENOVATE_TOKEN }}
-  RENOVATE_CONFIG_FILE: ${{env.RENOVATE_CONFIG_FILE}}
+  RENOVATE_CONFIG_FILE: ${{secrets.RENOVATE_CONFIG_FILE}}
 
 on:
   push:
