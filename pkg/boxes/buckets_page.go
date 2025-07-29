@@ -16,11 +16,9 @@ type BucketsPage struct {
 
 	list       *ListPage
 	statusText *tview.TextView
-
-	client *s3.Client
 }
 
-func NewBucketsBox(client *s3.Client) *BucketsPage {
+func NewBucketsBox() *BucketsPage {
 	listPage := NewListPage()
 	statusText := tview.NewTextView().SetTextAlign(tview.AlignCenter)
 
@@ -33,11 +31,12 @@ func NewBucketsBox(client *s3.Client) *BucketsPage {
 		Flex:       flex,
 		list:       listPage,
 		statusText: statusText,
-		client:     client,
 	}
 
 	listPage.SetSelectedFunc(func(columns []string) {
-		activeApp.OpenPage(NewObjectsPage(box.client, columns[0]))
+		if client, ok := s3lib.GetActiveClient(); ok {
+			activeApp.OpenPage(NewObjectsPage(client, columns[0]))
+		}
 	})
 
 	listPage.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
@@ -77,7 +76,15 @@ func (b *BucketsPage) load() {
 		Columns: []string{"Bucket Name", "Region", "Created At"},
 	})
 
-	buckets, err := s3lib.ListBuckets(b.client, context.Background())
+	var client *s3.Client
+	if c, ok := s3lib.GetActiveClient(); !ok {
+		b.setError(errors.New("no active S3 client available"))
+		return
+	} else {
+		client = c
+	}
+
+	buckets, err := s3lib.ListBuckets(client, context.Background())
 	if err != nil {
 		b.setError(err)
 		return
@@ -103,7 +110,11 @@ func (b *BucketsPage) newBucketForm() {
 	form := tview.NewForm()
 	form.AddInputField("Name", "", 20, nil, func(text string) {})
 	form.AddButton("Create", func() {
-		b.createBucket(form)
+		err := b.createBucket(form)
+		if err != nil {
+			b.setError(err)
+		}
+
 		activeApp.CloseModal(modalName)
 	})
 	form.AddButton("Cancel", func() {
@@ -114,19 +125,20 @@ func (b *BucketsPage) newBucketForm() {
 
 }
 
-func (b *BucketsPage) createBucket(form *tview.Form) {
+func (b *BucketsPage) createBucket(form *tview.Form) error {
 	name := form.GetFormItemByLabel("Name").(*tview.InputField).GetText()
 
 	if name == "" {
-		b.setError(errors.New("bucket name cannot be empty"))
-		return
+		return errors.New("bucket name cannot be empty")
 	}
 
-	err := s3lib.CreateBucket(b.client, context.Background(), name, "")
-	if err != nil {
-		b.setError(err)
-		return
+	if client, ok := s3lib.GetActiveClient(); ok {
+		err := s3lib.CreateBucket(client, context.Background(), name, "")
+		if err != nil {
+			return err
+		}
+		b.load()
 	}
-	b.load()
 
+	return nil
 }

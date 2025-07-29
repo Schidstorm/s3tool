@@ -32,13 +32,13 @@ func NewContextPage() *ContextPage {
 		typeStr := columns[0]
 		name := columns[1]
 
-		client, err := s3lib.LoadContext(typeStr, name)
+		_, err := s3lib.LoadContext(typeStr, name)
 		if err != nil {
 			page.setError(err)
 			return
 		}
 
-		activeApp.OpenPage(NewBucketsBox(client))
+		activeApp.OpenPage(NewBucketsBox())
 	})
 
 	page.load()

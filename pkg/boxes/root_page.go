@@ -20,7 +20,7 @@ func NewRootPage() *RootPage {
 	header.SetDirection(tview.FlexColumn)
 
 	contextInfo := NewS3ClientInfo()
-	contextInfo.Update(nil)
+	contextInfo.update(nil)
 	header.AddItem(contextInfo, 0, 1, false)
 
 	hotkeyInfo := NewHotkeyInfo()

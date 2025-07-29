@@ -158,7 +158,9 @@ func LoadContext(typeStr, name string) (*s3.Client, error) {
 		s3Options = append(s3Options, configProvider.LoadS3Options)
 	}
 
-	return s3.NewFromConfig(sdkConfig, s3Options...), nil
+	client := s3.NewFromConfig(sdkConfig, s3Options...)
+	SetActiveClient(client)
+	return client, nil
 }
 
 func loadAwsOptions(profile string) configProvider {

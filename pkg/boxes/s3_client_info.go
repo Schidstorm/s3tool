@@ -4,6 +4,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/rivo/tview"
+	"github.com/schidstorm/s3tool/pkg/s3lib"
 )
 
 type S3ClientInfo struct {
@@ -21,10 +22,18 @@ func NewS3ClientInfo() *S3ClientInfo {
 		Table: table,
 	}
 
+	s3lib.RegisterActiveClientChangeHandler(func(client *s3.Client) {
+		info.update(client)
+	})
+
+	if client, ok := s3lib.GetActiveClient(); ok {
+		info.update(client)
+	}
+
 	return info
 }
 
-func (info *S3ClientInfo) Update(client *s3.Client) {
+func (info *S3ClientInfo) update(client *s3.Client) {
 	info.Clear()
 
 	if client == nil {
@@ -36,7 +45,8 @@ func (info *S3ClientInfo) Update(client *s3.Client) {
 	for name, value := range infos {
 		row, col := infoNameToLocation(name)
 		if row >= 0 && col >= 0 {
-			info.SetCell(row, col, tview.NewTableCell(value).SetTextColor(tview.Styles.PrimaryTextColor))
+			info.SetCell(row, col, tview.NewTableCell(name).SetTextColor(tview.Styles.SecondaryTextColor))
+			info.SetCell(row, col*2, tview.NewTableCell(value).SetTextColor(tview.Styles.PrimaryTextColor))
 		}
 	}
 }
