@@ -17,11 +17,11 @@ func NewApp(page PageContent) *App {
 	}
 
 	activeApp = app
-	if page != nil {
-		root.OpenPage(page)
-	} else {
-		root.OpenPage(NewContextPage())
+	if page == nil {
+		page = NewContextPage()
 	}
+
+	root.OpenPage(page)
 
 	return app
 }
@@ -42,6 +42,6 @@ func (a *App) OpenPage(page PageContent) {
 	a.root.OpenPage(page)
 }
 
-func (a *App) closePage() {
-	a.root.closePage()
+func (a *App) SetError(err error) {
+	a.root.SetError(err)
 }

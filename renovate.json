@@ -1,12 +1,28 @@
 {
-    "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-    "extends": [
-      ":automergeDisabled",
-      ":disableDigestUpdates",
-      ":separateMultipleMajorReleases",
-      ":disableMajorUpdates"
-    ],
-    "enabledManagers": [
-      "gomod"
-    ]
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    ":automergeDisabled",
+    ":disableDigestUpdates",
+    ":separateMultipleMajorReleases",
+    ":disableMajorUpdates"
+  ],
+  "enabledManagers": [
+    "gomod"
+  ],
+  "lockFileMaintenance": {
+    "enabled": true,
+    "automerge": true
+  },
+  "packageRules": [
+    {
+      "matchDepTypes": ["devDependencies"],
+      "matchPackageNames": ["lint", "prettier"],
+      "automerge": true
+    },
+    {
+      "matchUpdateTypes": ["minor", "patch"],
+      "matchCurrentVersion": "!/^0/",
+      "automerge": true
+    }
+  ]
 }
