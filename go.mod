@@ -3,7 +3,7 @@ module github.com/schidstorm/s3tool
 go 1.24.2
 
 require (
-	github.com/aws/aws-sdk-go-v2 v1.36.6
+	github.com/aws/aws-sdk-go-v2 v1.37.2
 	github.com/aws/aws-sdk-go-v2/config v1.29.18
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.17.85
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.84.1
@@ -31,7 +31,7 @@ require (
 	github.com/derailed/tcell/v2 v2.3.1-rc.4 // indirect
 	github.com/derailed/tview v0.8.5 // indirect
 	github.com/gdamore/encoding v1.0.1 // indirect
-	github.com/go-ini/ini v1.67.0 // indirect
+	github.com/go-ini/ini v1.67.0
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
