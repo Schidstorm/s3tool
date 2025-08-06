@@ -11,8 +11,9 @@ type RootPage struct {
 	contextInfo *S3ClientInfo
 	hotkeyInfo  *HotkeyInfo
 
-	pageStask []*Page
-	modalOpen string
+	pageStask  []*Page
+	modalOpen  string
+	statusText *tview.TextView
 }
 
 func NewRootPage() *RootPage {
@@ -30,16 +31,20 @@ func NewRootPage() *RootPage {
 	content := tview.NewPages()
 	content.SetBorder(true)
 
+	statusText := tview.NewTextView().SetTextAlign(tview.AlignCenter)
+
 	flex := tview.NewFlex()
 	flex.SetDirection(tview.FlexRow)
 	flex.AddItem(header, 10, 1, false)
 	flex.AddItem(content, 0, 1, true)
+	flex.AddItem(statusText, 1, 1, false)
 
 	a := &RootPage{
 		contextInfo: contextInfo,
 		hotkeyInfo:  hotkeyInfo,
 		pages:       content,
 		Flex:        flex,
+		statusText:  statusText,
 	}
 
 	flex.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
@@ -47,6 +52,9 @@ func NewRootPage() *RootPage {
 		case tcell.KeyEscape:
 			if a.modalOpen != "" {
 				a.CloseModal(a.modalOpen)
+				return nil
+			} else if a.statusText.GetText(true) != "" {
+				a.statusText.SetText("")
 				return nil
 			}
 		}
@@ -104,4 +112,9 @@ func (a *RootPage) closePage() {
 	a.pageStask = a.pageStask[:len(a.pageStask)-1]
 
 	a.openPage(a.pageStask[len(a.pageStask)-1])
+}
+
+func (a *RootPage) SetError(err error) {
+	a.statusText.SetText("Error: " + err.Error())
+	a.statusText.SetTextColor(tcell.ColorRed)
 }

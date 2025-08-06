@@ -16,10 +16,7 @@ import (
 )
 
 type ObjectsPage struct {
-	*tview.Flex
-
-	list       *ListPage
-	statusText *tview.TextView
+	*ListPage
 
 	client     *s3.Client
 	bucketName string
@@ -27,17 +24,8 @@ type ObjectsPage struct {
 
 func NewObjectsPage(client *s3.Client, bucketName string) *ObjectsPage {
 	listPage := NewListPage()
-	statusText := tview.NewTextView().SetTextAlign(tview.AlignCenter)
-
-	flex := tview.NewFlex()
-	flex.SetDirection(tview.FlexRow)
-	flex.AddItem(listPage, 0, 1, true)
-	flex.AddItem(statusText, 1, 1, false)
-
 	page := &ObjectsPage{
-		Flex:       flex,
-		list:       listPage,
-		statusText: statusText,
+		ListPage:   NewListPage(),
 		client:     client,
 		bucketName: bucketName,
 	}
@@ -54,10 +42,10 @@ func NewObjectsPage(client *s3.Client, bucketName string) *ObjectsPage {
 				return nil
 			}
 			if event.Rune() == 'e' {
-				if i, row := page.list.GetSelectedRow(); i >= 0 {
+				if i, row := page.ListPage.GetSelectedRow(); i >= 0 {
 					err := page.editFile(row.Columns[0])
 					if err != nil {
-						page.setError(err)
+						activeApp.SetError(err)
 					}
 				}
 				return nil
@@ -86,20 +74,16 @@ func (b *ObjectsPage) Hotkeys() map[string]string {
 	}
 }
 
-func (b *ObjectsPage) SetSearch(search string) {
-	b.list.SetSearch(search)
-}
-
 func (b *ObjectsPage) load() {
-	b.list.ClearRows()
-	b.list.AddRow(Row{
+	b.ListPage.ClearRows()
+	b.ListPage.AddRow(Row{
 		Header:  true,
 		Columns: []string{"Name", "Size", "Last Modified"},
 	})
 
 	objects, err := s3lib.ListObjects(b.client, context.Background(), b.bucketName)
 	if err != nil {
-		b.setError(err)
+		activeApp.SetError(err)
 		return
 	}
 
@@ -114,7 +98,7 @@ func (b *ObjectsPage) load() {
 			},
 		}
 	}
-	b.list.AddRows(rows)
+	b.ListPage.AddRows(rows)
 }
 
 func humanizeSize(sizep *int64) string {
@@ -131,18 +115,13 @@ func humanizeSize(sizep *int64) string {
 	return fmt.Sprintf("%d %s", size, units[i])
 }
 
-func (b *ObjectsPage) setError(err error) {
-	b.statusText.SetText("Error: " + err.Error())
-	b.statusText.SetTextColor(tcell.ColorRed)
-}
-
 func (b *ObjectsPage) newObjectForm() {
 	modalName := "newObject"
 	form := tview.NewForm()
 	form.AddInputField("Name", "", 20, nil, func(text string) {})
 	form.AddButton("Create", func() {
 		if err := b.createObject(form); err != nil {
-			b.setError(err)
+			activeApp.SetError(err)
 		}
 		activeApp.CloseModal(modalName)
 	})
