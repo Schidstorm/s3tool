@@ -39,7 +39,13 @@ func NewProfilePage() *ProfilePage {
 			return
 		}
 
-		activeApp.OpenPage(NewBucketsBox(client))
+		activeApp.SetS3Client(client, "")
+		activeApp.OpenPage(AttachClose{
+			PageContent: NewBucketsPage(client),
+			Closer: CloseFunc(func() {
+				activeApp.SetS3Client(nil, "")
+			}),
+		})
 	})
 
 	page.load()

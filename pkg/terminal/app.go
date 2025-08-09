@@ -1,6 +1,9 @@
 package terminal
 
-import "github.com/rivo/tview"
+import (
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/rivo/tview"
+)
 
 var activeApp *App
 
@@ -44,4 +47,8 @@ func (a *App) OpenPage(page PageContent) {
 
 func (a *App) SetError(err error) {
 	a.root.SetError(err)
+}
+
+func (a *App) SetS3Client(client *s3.Client, bucketName string) {
+	a.root.SetS3Client(client, bucketName)
 }

@@ -13,6 +13,31 @@ type PageContent interface {
 	SetSearch(term string)
 }
 
+type CloseFunc func()
+
+func (f CloseFunc) Close() {
+	f()
+}
+
+type AttachClose struct {
+	PageContent
+	Closer ClosePage
+}
+
+func (a AttachClose) Close() {
+	if closer, ok := a.PageContent.(ClosePage); ok {
+		closer.Close()
+	}
+
+	if a.Closer != nil {
+		a.Closer.Close()
+	}
+}
+
+type ClosePage interface {
+	Close()
+}
+
 type Page struct {
 	*tview.Flex
 
@@ -41,10 +66,8 @@ func NewPage(content PageContent) *Page {
 	contentFlex.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Key() {
 		case tcell.KeyEscape:
-			if p.closeHandler != nil {
-				p.closeHandler()
-				return nil
-			}
+			p.handleClose()
+			return nil
 		case tcell.KeyRune:
 			if event.Rune() == '/' {
 				p.activateSearch()
@@ -128,4 +151,14 @@ func (p *Page) Title() string {
 
 func (p *Page) SetCloseHandler(handler func()) {
 	p.closeHandler = handler
+}
+
+func (p *Page) handleClose() {
+	if closer, ok := p.content.(ClosePage); ok {
+		closer.Close()
+	}
+
+	if p.closeHandler != nil {
+		p.closeHandler()
+	}
 }

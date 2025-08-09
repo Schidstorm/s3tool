@@ -39,6 +39,27 @@ resource "aws_iam_user_policy_attachment" "attach_policy" {
   policy_arn = aws_iam_policy.s3_user_policy.arn
 }
 
+data "aws_iam_policy_document" "s3_list_buckets" {
+  statement {
+    actions = [
+      "s3:ListAllMyBuckets",
+      "s3:GetBucketLocation"
+    ]
+    resources = ["*"]
+    effect = "Allow"
+  }
+}
+
+resource "aws_iam_policy" "s3_list_buckets_policy" {
+  name   = "${var.bucket_name}-s3-list-buckets"
+  policy = data.aws_iam_policy_document.s3_list_buckets.json
+}
+
+resource "aws_iam_user_policy_attachment" "attach_list_buckets_policy" {
+  user       = aws_iam_user.s3_user.name
+  policy_arn = aws_iam_policy.s3_list_buckets_policy.arn
+}
+
 output "access_key_id" {
   value       = aws_iam_access_key.s3_user_key.id
   description = "Access key ID for the S3 IAM user"
