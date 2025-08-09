@@ -1,4 +1,4 @@
-package boxes
+package terminal
 
 import (
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -6,25 +6,25 @@ import (
 	"github.com/rivo/tview"
 )
 
-type S3ClientInfo struct {
+type ProfileInfoBox struct {
 	*tview.Table
 }
 
-func NewS3ClientInfo() *S3ClientInfo {
+func NewProfileInfoBox() *ProfileInfoBox {
 	table := tview.NewTable().SetBorders(false)
 	table.SetSelectable(false, false)
 	table.Box.SetBorder(true)
 	table.Box.SetTitle("S3 Client Info")
 	table.Box.SetTitleAlign(tview.AlignLeft)
 
-	info := &S3ClientInfo{
+	info := &ProfileInfoBox{
 		Table: table,
 	}
 
 	return info
 }
 
-func (info *S3ClientInfo) Update(client *s3.Client) {
+func (info *ProfileInfoBox) Update(client *s3.Client) {
 	info.Clear()
 
 	if client == nil {

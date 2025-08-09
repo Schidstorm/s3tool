@@ -1,4 +1,4 @@
-package boxes
+package terminal
 
 import (
 	"context"
@@ -7,8 +7,10 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path"
+	"strings"
+	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -20,18 +22,26 @@ type ObjectsPage struct {
 
 	client     *s3.Client
 	bucketName string
+	prefix     string
 }
 
-func NewObjectsPage(client *s3.Client, bucketName string) *ObjectsPage {
+func NewObjectsPage(client *s3.Client, bucketName, prefix string) *ObjectsPage {
 	listPage := NewListPage()
 	page := &ObjectsPage{
-		ListPage:   NewListPage(),
+		ListPage:   listPage,
 		client:     client,
 		bucketName: bucketName,
+		prefix:     prefix,
 	}
 
 	listPage.SetSelectedFunc(func(columns []string) {
-		page.viewFile(columns[0])
+		p := columns[0]
+		if strings.HasSuffix(p, "/") {
+			activeApp.OpenPage(NewObjectsPage(client, bucketName, prefix+p))
+		} else {
+			objectKey := prefix + p
+			page.viewFile(objectKey)
+		}
 	})
 
 	listPage.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
@@ -43,7 +53,7 @@ func NewObjectsPage(client *s3.Client, bucketName string) *ObjectsPage {
 			}
 			if event.Rune() == 'e' {
 				if i, row := page.ListPage.GetSelectedRow(); i >= 0 {
-					err := page.editFile(row.Columns[0])
+					err := page.editFile(prefix + row.Columns[0])
 					if err != nil {
 						activeApp.SetError(err)
 					}
@@ -64,7 +74,12 @@ func (b *ObjectsPage) Root() tview.Primitive {
 }
 
 func (b *ObjectsPage) Title() string {
-	return "Objects in " + b.bucketName
+	title := "Objects in " + b.bucketName
+	if b.prefix != "" {
+		title += " - " + b.prefix
+	}
+
+	return title
 }
 
 func (b *ObjectsPage) Hotkeys() map[string]string {
@@ -81,7 +96,7 @@ func (b *ObjectsPage) load() {
 		Columns: []string{"Name", "Size", "Last Modified"},
 	})
 
-	objects, err := s3lib.ListObjects(b.client, context.Background(), b.bucketName)
+	objects, err := s3lib.ListObjects(b.client, context.Background(), b.bucketName, b.prefix)
 	if err != nil {
 		activeApp.SetError(err)
 		return
@@ -92,13 +107,20 @@ func (b *ObjectsPage) load() {
 		rows[i] = Row{
 			Header: false,
 			Columns: []string{
-				*obj.Key,
-				humanizeSize(obj.Size),
-				aws.ToTime(obj.LastModified).Format("2006-01-02 15:04:05"),
+				obj.Name,
+				humanizeSize(obj.Item.Size),
+				humanizeTime(obj.Item.LastModified),
 			},
 		}
 	}
 	b.ListPage.AddRows(rows)
+}
+
+func humanizeTime(t *time.Time) string {
+	if t == nil {
+		return ""
+	}
+	return t.Format("2006-01-02 15:04:05")
 }
 
 func humanizeSize(sizep *int64) string {
@@ -134,9 +156,12 @@ func (b *ObjectsPage) newObjectForm() {
 
 func (b *ObjectsPage) createObject(form *tview.Form) error {
 	name := form.GetFormItemByLabel("Name").(*tview.InputField).GetText()
+	name = strings.TrimSpace(name)
 	if name == "" {
 		return errors.New("object name cannot be empty")
 	}
+
+	name = b.prefix + name
 
 	tmpDir, err := os.MkdirTemp("", "s3tool")
 	if err != nil {
@@ -146,6 +171,16 @@ func (b *ObjectsPage) createObject(form *tview.Form) error {
 	tmpFilePath := tmpDir + "/" + name
 	if _, err := os.Stat(tmpFilePath); err == nil {
 		os.Remove(tmpFilePath)
+	}
+
+	err = os.MkdirAll(path.Dir(tmpFilePath), 0755)
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(tmpFilePath, nil, 0644)
+	if err != nil {
+		return err
 	}
 
 	err = EditFile(tmpFilePath)

@@ -1,26 +1,26 @@
-package boxes
+package terminal
 
 import "github.com/rivo/tview"
 
-type HotkeyInfo struct {
+type HotkeyInfoBox struct {
 	*tview.Table
 }
 
-func NewHotkeyInfo() *HotkeyInfo {
+func NewHotkeyInfoBox() *HotkeyInfoBox {
 	table := tview.NewTable().SetBorders(false)
 	table.SetSelectable(false, false)
 	table.Box.SetBorder(true)
 	table.Box.SetTitle("Hotkeys")
 	table.Box.SetTitleAlign(tview.AlignLeft)
 
-	info := &HotkeyInfo{
+	info := &HotkeyInfoBox{
 		Table: table,
 	}
 
 	return info
 }
 
-func (info *HotkeyInfo) Update(pageContent PageContent) {
+func (info *HotkeyInfoBox) Update(pageContent PageContent) {
 	info.Clear()
 
 	if pageContent == nil {

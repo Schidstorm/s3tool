@@ -1,4 +1,4 @@
-package boxes
+package terminal
 
 import (
 	"github.com/gdamore/tcell/v2"
@@ -8,8 +8,8 @@ import (
 type RootPage struct {
 	*tview.Flex
 	pages       *tview.Pages
-	contextInfo *S3ClientInfo
-	hotkeyInfo  *HotkeyInfo
+	profileInfo *ProfileInfoBox
+	hotkeyInfo  *HotkeyInfoBox
 
 	pageStask  []*Page
 	modalOpen  string
@@ -20,11 +20,11 @@ func NewRootPage() *RootPage {
 	header := tview.NewFlex()
 	header.SetDirection(tview.FlexColumn)
 
-	contextInfo := NewS3ClientInfo()
-	contextInfo.Update(nil)
-	header.AddItem(contextInfo, 0, 1, false)
+	profileInfo := NewProfileInfoBox()
+	profileInfo.Update(nil)
+	header.AddItem(profileInfo, 0, 1, false)
 
-	hotkeyInfo := NewHotkeyInfo()
+	hotkeyInfo := NewHotkeyInfoBox()
 	hotkeyInfo.Update(nil)
 	header.AddItem(hotkeyInfo, 0, 1, false)
 
@@ -40,7 +40,7 @@ func NewRootPage() *RootPage {
 	flex.AddItem(statusText, 1, 1, false)
 
 	a := &RootPage{
-		contextInfo: contextInfo,
+		profileInfo: profileInfo,
 		hotkeyInfo:  hotkeyInfo,
 		pages:       content,
 		Flex:        flex,
@@ -99,7 +99,7 @@ func (a *RootPage) OpenPage(pageContent PageContent) {
 
 func (a *RootPage) openPage(page *Page) {
 	a.pages.AddPage(page.Title(), page, true, true)
-	a.pages.SetTitle(page.Title())
+	a.pages.SetTitle(" " + page.Title() + " ")
 	a.pages.SwitchToPage(page.Title())
 	a.hotkeyInfo.Update(page.content)
 }

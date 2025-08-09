@@ -1,4 +1,4 @@
-package boxes
+package terminal
 
 import (
 	"context"
@@ -26,7 +26,7 @@ func NewBucketsBox(client *s3.Client) *BucketsPage {
 	}
 
 	listPage.SetSelectedFunc(func(columns []string) {
-		activeApp.OpenPage(NewObjectsPage(box.client, columns[0]))
+		activeApp.OpenPage(NewObjectsPage(box.client, columns[0], ""))
 	})
 
 	listPage.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {

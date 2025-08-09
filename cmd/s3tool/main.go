@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/schidstorm/s3tool/pkg/boxes"
 	"github.com/schidstorm/s3tool/pkg/cli"
+	"github.com/schidstorm/s3tool/pkg/terminal"
 )
 
 func main() {
@@ -15,7 +15,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	app := boxes.NewApp(nil)
-
+	app := terminal.NewApp(nil)
 	app.Run()
+
 }

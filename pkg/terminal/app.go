@@ -1,4 +1,4 @@
-package boxes
+package terminal
 
 import "github.com/rivo/tview"
 
@@ -18,7 +18,7 @@ func NewApp(page PageContent) *App {
 
 	activeApp = app
 	if page == nil {
-		page = NewContextPage()
+		page = NewProfilePage()
 	}
 
 	root.OpenPage(page)

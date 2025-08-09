@@ -1,4 +1,4 @@
-package boxes
+package terminal
 
 import (
 	"github.com/gdamore/tcell/v2"
