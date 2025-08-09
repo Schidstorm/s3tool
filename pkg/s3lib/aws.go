@@ -8,6 +8,8 @@ import (
 	"io"
 	"log"
 	"os"
+	"path"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -179,6 +181,13 @@ func DownloadFile(s3Client *s3.Client, ctx context.Context, bucketName string, o
 		return err
 	}
 	defer result.Body.Close()
+
+	os.Remove(fileName)
+	err = os.MkdirAll(path.Dir(fileName), 0755)
+	if err != nil {
+		return err
+	}
+
 	file, err := os.Create(fileName)
 	if err != nil {
 		log.Printf("Couldn't create file %v. Here's why: %v\n", fileName, err)
@@ -263,13 +272,14 @@ func CopyToBucket(s3Client *s3.Client, ctx context.Context, sourceBucket string,
 }
 
 // ListObjects lists the objects in a bucket.
-func ListObjects(s3Client *s3.Client, ctx context.Context, bucketName string) ([]types.Object, error) {
+func ListObjects(s3Client *s3.Client, ctx context.Context, bucketName, objectPrefix string) ([]RootItemResult[types.Object], error) {
+	objectTree := NewObjectTree[types.Object]()
 	var err error
 	var output *s3.ListObjectsV2Output
 	input := &s3.ListObjectsV2Input{
 		Bucket: aws.String(bucketName),
+		Prefix: aws.String(objectPrefix),
 	}
-	var objects []types.Object
 	objectPaginator := s3.NewListObjectsV2Paginator(s3Client, input)
 	for objectPaginator.HasMorePages() {
 		output, err = objectPaginator.NextPage(ctx)
@@ -281,10 +291,17 @@ func ListObjects(s3Client *s3.Client, ctx context.Context, bucketName string) ([
 			}
 			break
 		} else {
-			objects = append(objects, output.Contents...)
+			for _, object := range output.Contents {
+				objectKey := strings.TrimPrefix(aws.ToString(object.Key), objectPrefix)
+				objectTree.AddObject(objectKey, object)
+			}
 		}
 	}
-	return objects, err
+	if err != nil {
+		return nil, err
+	}
+
+	return objectTree.ListRootItems(), nil
 }
 
 // DeleteObjects deletes a list of objects from a bucket.

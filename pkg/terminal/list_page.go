@@ -1,4 +1,4 @@
-package boxes
+package terminal
 
 import (
 	"strings"
@@ -23,6 +23,7 @@ type ListPage struct {
 
 func NewListPage() *ListPage {
 	table := tview.NewTable().SetSelectable(true, false)
+	table.SetFixed(1, 0)
 
 	flex := tview.NewFlex()
 	flex.SetDirection(tview.FlexRow)
@@ -64,24 +65,23 @@ func (b *ListPage) update() {
 
 	rowIndex := 0
 	for _, row := range b.rows {
-		if !row.Header && !matchAnyItems(b.searchTerm, row.Columns) {
+		if !matchAnyItems(b.searchTerm, row.Columns) {
 			continue
 		}
 
 		for columnIndex, item := range row.Columns {
-			bucketNameCell := tview.NewTableCell(item)
+			cell := tview.NewTableCell(item)
+			cell.SetAlign(tview.AlignLeft)
+			cell.SetExpansion(1)
 			if row.Header {
-				bucketNameCell.SetTextColor(tcell.ColorYellow)
-				bucketNameCell.SetAlign(tview.AlignCenter)
+				cell.SetTextColor(tcell.ColorYellow)
+				cell.SetSelectable(false)
 			} else {
-				bucketNameCell.SetTextColor(tcell.ColorWhite)
+				cell.SetTextColor(tcell.ColorWhite)
+				cell.SetSelectable(true)
 			}
-			bucketNameCell.SetAlign(tview.AlignLeft)
-			bucketNameCell.SetSelectable(!row.Header)
-			bucketNameCell.SetExpansion(1)
-			b.table.SetCell(rowIndex, columnIndex, bucketNameCell)
+			b.table.SetCell(rowIndex, columnIndex, cell)
 		}
-
 		rowIndex++
 	}
 }

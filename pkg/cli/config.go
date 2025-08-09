@@ -3,19 +3,18 @@ package cli
 import (
 	"flag"
 	"os"
-	"path"
 	"strings"
 )
 
 var Config = S3ToolCliConfig{}
 
 type S3ToolCliConfig struct {
-	ContextsYamlPath string
+	ProfilesDirectory string
 }
 
 func Parse(args []string) error {
 	var cfg S3ToolCliConfig
-	flag.StringVar(&cfg.ContextsYamlPath, "contexts-yaml", "~/.s3tool/contexts.yaml", "Path to the contexts YAML file")
+	flag.StringVar(&cfg.ProfilesDirectory, "profiles", "~/.s3tool", "Path to a directory containing profile yaml files")
 
 	err := flag.CommandLine.Parse(args)
 	if err != nil {
@@ -30,11 +29,11 @@ func Parse(args []string) error {
 
 func cleanup(cfg S3ToolCliConfig) S3ToolCliConfig {
 	result := cfg
-	if strings.HasPrefix(result.ContextsYamlPath, "~") {
+	if strings.HasPrefix(result.ProfilesDirectory, "~") {
 		home, err := os.UserHomeDir()
 		if err == nil {
-			result.ContextsYamlPath = strings.TrimPrefix(result.ContextsYamlPath, "~")
-			result.ContextsYamlPath = path.Join(home, result.ContextsYamlPath)
+			result.ProfilesDirectory = strings.TrimPrefix(result.ProfilesDirectory, "~")
+			result.ProfilesDirectory = home + result.ProfilesDirectory
 		}
 	}
 
