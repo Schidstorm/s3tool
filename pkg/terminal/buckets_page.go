@@ -17,7 +17,7 @@ type BucketsPage struct {
 	client *s3.Client
 }
 
-func NewBucketsBox(client *s3.Client) *BucketsPage {
+func NewBucketsPage(client *s3.Client) *BucketsPage {
 	listPage := NewListPage()
 
 	box := &BucketsPage{
@@ -26,7 +26,14 @@ func NewBucketsBox(client *s3.Client) *BucketsPage {
 	}
 
 	listPage.SetSelectedFunc(func(columns []string) {
-		activeApp.OpenPage(NewObjectsPage(box.client, columns[0], ""))
+		bucketName := columns[0]
+		activeApp.SetS3Client(client, bucketName)
+		activeApp.OpenPage(AttachClose{
+			PageContent: NewObjectsPage(box.client, bucketName, ""),
+			Closer: CloseFunc(func() {
+				activeApp.SetS3Client(client, "")
+			}),
+		})
 	})
 
 	listPage.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {

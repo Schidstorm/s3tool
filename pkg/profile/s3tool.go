@@ -72,7 +72,6 @@ func (c *S3ProfileConnector) Type() string {
 
 func (c *S3ProfileConnector) CreateClient(ctx context.Context) (*s3.Client, error) {
 	cfg, err := config.LoadDefaultConfig(ctx,
-		config.WithRegion(c.parameters.Region),
 		config.WithCredentialsProvider(aws.CredentialsProviderFunc(func(ctx context.Context) (aws.Credentials, error) {
 			return aws.Credentials{
 				AccessKeyID:     c.parameters.AccessKeyID,

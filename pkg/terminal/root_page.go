@@ -1,6 +1,7 @@
 package terminal
 
 import (
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
@@ -21,12 +22,12 @@ func NewRootPage() *RootPage {
 	header.SetDirection(tview.FlexColumn)
 
 	profileInfo := NewProfileInfoBox()
-	profileInfo.Update(nil)
+	profileInfo.Update(nil, "")
 	header.AddItem(profileInfo, 0, 1, false)
 
 	hotkeyInfo := NewHotkeyInfoBox()
 	hotkeyInfo.Update(nil)
-	header.AddItem(hotkeyInfo, 0, 1, false)
+	header.AddItem(hotkeyInfo, 40, 0, false)
 
 	content := tview.NewPages()
 	content.SetBorder(true)
@@ -117,4 +118,8 @@ func (a *RootPage) closePage() {
 func (a *RootPage) SetError(err error) {
 	a.statusText.SetText("Error: " + err.Error())
 	a.statusText.SetTextColor(tcell.ColorRed)
+}
+
+func (a *RootPage) SetS3Client(client *s3.Client, bucketName string) {
+	a.profileInfo.Update(client, bucketName)
 }
