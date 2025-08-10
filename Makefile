@@ -1,17 +1,13 @@
 
-
-# create function
-define build_debug
-	$(shell mkdir -p debug-build && \
-		    CGO_ENABLED=1 GO111MODULE=on go build -tags codes -gcflags="all=-N -l" -o debug-build/$(1) ./cmd/$(1) && \
-			./debug-build/$(1))
-endef
-
 test:
 	go test -v ./...
 
-debug:
-	$(call build_debug,s3tool)
+build-debug:
+	mkdir -p build && \
+	CGO_ENABLED=1 GO111MODULE=on go build -tags codes -gcflags="all=-N -l" -o build/s3tool ./cmd/s3tool
+
+debug: build-debug
+	./build/s3tool
 
 create_test_bucket:
 	terraform -chdir=test/deployment/modules/main init && \
@@ -21,3 +17,6 @@ delete_test_bucket:
 	terraform -chdir=test/deployment/modules/main init && \
 	terraform -chdir=test/deployment/modules/main destroy -auto-approve
 
+generate-images: build-debug
+	mkdir -p screens && \
+	go run ./cmd/readme
