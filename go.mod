@@ -5,7 +5,7 @@ go 1.24.2
 require (
 	github.com/aws/aws-sdk-go-v2 v1.38.1
 	github.com/aws/aws-sdk-go-v2/config v1.31.2
-	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.18.5
+	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.19.0
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.87.1
 	github.com/aws/smithy-go v1.22.5
 	github.com/gdamore/tcell/v2 v2.8.1
