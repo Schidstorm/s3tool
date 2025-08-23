@@ -22,8 +22,8 @@ func TestProfileInfoBoxPathStyle(t *testing.T) {
 	rows := getTableRows(box.table)
 	assert.Equal(t, 2, len(rows))
 	assert.EqualValues(t, [][]string{
-		{"Endpoint", "https://s3.us-west-2.amazonaws.com:654/test-bucket"},
-		{"Region", "us-west-2"},
+		{"Endpoint:", "https://s3.us-west-2.amazonaws.com:654/test-bucket"},
+		{"Region:", "us-west-2"},
 	}, rows)
 }
 
@@ -39,8 +39,8 @@ func TestProfileInfoBoxNoPathStyle(t *testing.T) {
 	rows := getTableRows(box.table)
 	assert.Equal(t, 2, len(rows))
 	assert.EqualValues(t, [][]string{
-		{"Endpoint", "https://test-bucket.asasd:654"},
-		{"Region", "us-west-2"},
+		{"Endpoint:", "https://test-bucket.asasd:654"},
+		{"Region:", "us-west-2"},
 	}, rows)
 }
 
@@ -56,8 +56,8 @@ func TestProfileInfoBoxNoPathStyleNoBucket(t *testing.T) {
 	rows := getTableRows(box.table)
 	assert.Equal(t, 2, len(rows))
 	assert.EqualValues(t, [][]string{
-		{"Endpoint", "https://asasd:654/"},
-		{"Region", "us-west-2"},
+		{"Endpoint:", "https://asasd:654/"},
+		{"Region:", "us-west-2"},
 	}, rows)
 }
 
@@ -65,8 +65,7 @@ func TestProfileInfoBoxNoClient(t *testing.T) {
 	box := NewProfileInfoBox()
 	box.Update(nil, "")
 	rows := getTableRows(box.table)
-	assert.Equal(t, 1, len(rows))
-	assert.Equal(t, "No S3 client available", rows[0][0])
+	assert.Equal(t, 0, len(rows))
 }
 
 func getTableRows(t *tview.Table) [][]string {
