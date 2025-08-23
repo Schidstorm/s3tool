@@ -2,16 +2,16 @@ package terminal
 
 import (
 	"context"
-	"crypto/sha256"
 	"errors"
 	"fmt"
-	"io"
+
 	"os"
 	"path"
 	"strings"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/aws"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/schidstorm/s3tool/pkg/s3lib"
@@ -20,12 +20,12 @@ import (
 type ObjectsPage struct {
 	*ListPage
 
-	client     *s3.Client
+	client     s3lib.Client
 	bucketName string
 	prefix     string
 }
 
-func NewObjectsPage(client *s3.Client, bucketName, prefix string) *ObjectsPage {
+func NewObjectsPage(client s3lib.Client, bucketName, prefix string) *ObjectsPage {
 	listPage := NewListPage()
 	page := &ObjectsPage{
 		ListPage:   listPage,
@@ -35,33 +35,16 @@ func NewObjectsPage(client *s3.Client, bucketName, prefix string) *ObjectsPage {
 	}
 
 	listPage.SetSelectedFunc(func(columns []string) {
+		if len(columns) < 1 {
+			return
+		}
+
 		p := columns[0]
 		if strings.HasSuffix(p, "/") {
 			activeApp.OpenPage(NewObjectsPage(client, bucketName, prefix+p))
 		} else {
-			objectKey := prefix + p
-			page.viewFile(objectKey)
+			activeApp.OpenPage(NewObjectPage(client, bucketName, prefix+p))
 		}
-	})
-
-	listPage.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		switch event.Key() {
-		case tcell.KeyRune:
-			if event.Rune() == 'n' {
-				page.newObjectForm()
-				return nil
-			}
-			if event.Rune() == 'e' {
-				if i, row := page.ListPage.GetSelectedRow(); i >= 0 {
-					err := page.editFile(prefix + row.Columns[0])
-					if err != nil {
-						activeApp.SetError(err)
-					}
-				}
-				return nil
-			}
-		}
-		return event
 	})
 
 	page.load()
@@ -82,10 +65,36 @@ func (b *ObjectsPage) Title() string {
 	return title
 }
 
-func (b *ObjectsPage) Hotkeys() map[string]string {
-	return map[string]string{
-		"n": "Create Object",
-		"e": "Edit Object",
+func (b *ObjectsPage) Hotkeys() map[tcell.EventKey]Hotkey {
+	return map[tcell.EventKey]Hotkey{
+		EventKey(tcell.KeyRune, 'n', 0): Hotkey{
+			Title:   "New Object",
+			Handler: func(event *tcell.EventKey) *tcell.EventKey { b.newObjectForm(); return nil },
+		},
+		EventKey(tcell.KeyRune, 'v', 0): Hotkey{
+			Title: "View Object",
+			Handler: func(event *tcell.EventKey) *tcell.EventKey {
+				if i, row := b.ListPage.GetSelectedRow(); i >= 0 {
+					err := viewObject(b.client, b.bucketName, b.prefix+row.Columns[0])
+					if err != nil {
+						activeApp.SetError(err)
+					}
+				}
+				return nil
+			},
+		},
+		EventKey(tcell.KeyRune, 'e', 0): Hotkey{
+			Title: "Edit Object",
+			Handler: func(event *tcell.EventKey) *tcell.EventKey {
+				if i, row := b.ListPage.GetSelectedRow(); i >= 0 {
+					err := editObject(b.client, b.bucketName, b.prefix+row.Columns[0])
+					if err != nil {
+						activeApp.SetError(err)
+					}
+				}
+				return nil
+			},
+		},
 	}
 }
 
@@ -96,21 +105,38 @@ func (b *ObjectsPage) load() {
 		Columns: []string{"Name", "Size", "Last Modified"},
 	})
 
-	objects, err := s3lib.ListObjects(b.client, context.Background(), b.bucketName, b.prefix)
-	if err != nil {
-		activeApp.SetError(err)
-		return
+	paginator := b.client.ListObjects(context.Background(), b.bucketName, b.prefix)
+	var objects []s3lib.Object
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(context.Background())
+		if err != nil {
+			activeApp.SetError(err)
+			return
+		}
+
+		objects = append(objects, page...)
 	}
 
 	rows := make([]Row, len(objects))
 	for i, obj := range objects {
-		rows[i] = Row{
-			Header: false,
-			Columns: []string{
-				obj.Name,
-				humanizeSize(obj.Item.Size),
-				humanizeTime(obj.Item.LastModified),
-			},
+		if obj.IsDirectory() {
+			rows[i] = Row{
+				Header: false,
+				Columns: []string{
+					strings.TrimPrefix(aws.ToString(obj.Object.Key), b.prefix),
+					"",
+					"",
+				},
+			}
+		} else {
+			rows[i] = Row{
+				Header: false,
+				Columns: []string{
+					strings.TrimPrefix(aws.ToString(obj.Object.Key), b.prefix),
+					humanizeSize(obj.Object.Size),
+					humanizeTime(obj.Object.LastModified),
+				},
+			}
 		}
 	}
 	b.ListPage.AddRows(rows)
@@ -120,7 +146,8 @@ func humanizeTime(t *time.Time) string {
 	if t == nil {
 		return ""
 	}
-	return t.Format("2006-01-02 15:04:05")
+
+	return t.In(time.Local).Format("2006-01-02 15:04:05")
 }
 
 func humanizeSize(sizep *int64) string {
@@ -192,7 +219,7 @@ func (b *ObjectsPage) createObject(form *tview.Form) error {
 		return nil
 	}
 
-	err = s3lib.UploadFile(b.client, context.Background(), b.bucketName, name, tmpFilePath)
+	err = b.client.UploadFile(context.Background(), b.bucketName, name, tmpFilePath)
 	if err != nil {
 		return err
 	}
@@ -200,91 +227,4 @@ func (b *ObjectsPage) createObject(form *tview.Form) error {
 	b.load()
 
 	return nil
-}
-
-func (b *ObjectsPage) downloadFileToTmp(objectName string) (string, error) {
-	tmpDir, err := os.MkdirTemp("", "s3tool")
-	if err != nil {
-		return "", err
-	}
-	tmpFilePath := tmpDir + "/" + objectName
-
-	err = s3lib.DownloadFile(b.client, context.Background(), b.bucketName, objectName, tmpFilePath)
-	if err != nil {
-		return "", err
-	}
-
-	return tmpFilePath, nil
-
-}
-
-func (b *ObjectsPage) editFile(objectName string) error {
-	tmpFilePath, err := b.downloadFileToTmp(objectName)
-	if err != nil {
-		return err
-	}
-	defer os.Remove(tmpFilePath)
-
-	oldHash, err := fileHash(tmpFilePath)
-	if err != nil {
-		return err
-	}
-
-	err = EditFile(tmpFilePath)
-	if err != nil {
-		return err
-	}
-
-	if _, err := os.Stat(tmpFilePath); os.IsNotExist(err) {
-		return errors.New("file does not exist after editing")
-	}
-
-	newHash, err := fileHash(tmpFilePath)
-	if err != nil {
-		return err
-	}
-
-	if oldHash != newHash {
-		err = s3lib.UploadFile(b.client, context.Background(), b.bucketName, objectName, tmpFilePath)
-		if err != nil {
-			return err
-		}
-	}
-	b.load()
-
-	return nil
-}
-
-func (b *ObjectsPage) viewFile(objectName string) error {
-	tmpFilePath, err := b.downloadFileToTmp(objectName)
-	if err != nil {
-		return err
-	}
-	defer os.Remove(tmpFilePath)
-
-	return ShowFile(tmpFilePath)
-}
-
-func fileHash(filePath string) (string, error) {
-	sha256Hash := sha256.New()
-	file, err := os.Open(filePath)
-	if err != nil {
-		return "", err
-	}
-	defer file.Close()
-
-	var buffer [4096]byte
-	for {
-		n, err := file.Read(buffer[:])
-		if n > 0 {
-			sha256Hash.Write(buffer[:n])
-		}
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
-			return "", err
-		}
-	}
-	return string(sha256Hash.Sum(nil)), nil
 }

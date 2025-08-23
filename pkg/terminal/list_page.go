@@ -3,7 +3,6 @@ package terminal
 import (
 	"strings"
 
-	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
 
@@ -65,7 +64,7 @@ func (b *ListPage) update() {
 
 	rowIndex := 0
 	for _, row := range b.rows {
-		if !matchAnyItems(b.searchTerm, row.Columns) {
+		if !row.Header && !matchAnyItems(b.searchTerm, row.Columns) {
 			continue
 		}
 
@@ -74,11 +73,12 @@ func (b *ListPage) update() {
 			cell.SetAlign(tview.AlignLeft)
 			cell.SetExpansion(1)
 			if row.Header {
-				cell.SetTextColor(tcell.ColorYellow)
+				cell.SetStyle(DefaultTheme.TableHeader)
 				cell.SetSelectable(false)
 			} else {
-				cell.SetTextColor(tcell.ColorWhite)
+				cell.SetStyle(DefaultTheme.TableCell)
 				cell.SetSelectable(true)
+				cell.SelectedStyle = DefaultTheme.TableSelected
 			}
 			b.table.SetCell(rowIndex, columnIndex, cell)
 		}

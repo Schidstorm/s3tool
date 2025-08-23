@@ -1,5 +1,7 @@
 package s3lib
 
+import "strings"
+
 var delimiter rune = '/'
 
 type objectTree[T any] struct {
@@ -33,14 +35,39 @@ func (t *objectTreeNode[T]) AddChild(keyParts []string, item T) {
 	t.children = append(t.children, addNode)
 }
 
-func (t *objectTreeNode[T]) CombineNameForSimpleNode() (string, T) {
-	if len(t.children) == 0 || len(t.children) > 1 {
-		return t.Name, t.Item
+func (t *objectTreeNode[T]) ListItems(prefix string) []RootItemResult[T] {
+	nodeFound := prefix == ""
+	var items []RootItemResult[T]
+	if nodeFound {
+		for _, child := range t.children {
+			isDir := len(child.children) > 0
+			items = append(items, RootItemResult[T]{
+				Name:        child.Name,
+				IsDirectory: isDir,
+				Item:        child.Item,
+			})
+		}
+		return items
 	}
 
-	suffix, item := t.children[0].CombineNameForSimpleNode()
-	return t.Name + suffix, item
+	for _, child := range t.children {
+		prefixParts := SplitObjectName(prefix)
+		if prefixParts[0] == child.Name {
+			items = append(items, child.ListItems(strings.TrimPrefix(prefix, prefixParts[0]))...)
+		}
+	}
+
+	return items
 }
+
+// func (t *objectTreeNode[T]) CombineNameForSimpleNode() (string, T) {
+// 	if len(t.children) == 0 || len(t.children) > 1 {
+// 		return t.Name, t.Item
+// 	}
+
+// 	suffix, item := t.children[0].CombineNameForSimpleNode()
+// 	return t.Name + suffix, item
+// }
 
 func NewObjectTree[T any]() *objectTree[T] {
 	return &objectTree[T]{}
@@ -58,24 +85,28 @@ func (t *objectTree[T]) AddObject(objectName string, item T) {
 }
 
 type RootItemResult[T any] struct {
-	Name string
-	Item T
+	Name        string
+	IsDirectory bool
+	Item        T
 }
 
-func (t *objectTree[T]) ListRootItems() []RootItemResult[T] {
+func (t *objectTree[T]) ListItems(prefix string) []RootItemResult[T] {
 	if t.root == nil {
 		return nil
 	}
 
-	var items []RootItemResult[T]
-	for _, child := range t.root.children {
-		name, item := child.CombineNameForSimpleNode()
-		items = append(items, RootItemResult[T]{
-			Name: name,
-			Item: item,
-		})
-	}
-	return items
+	return t.root.ListItems(prefix)
+
+	// var items []RootItemResult[T]
+	// for _, child := range t.root.children {
+	// 	name, item, isDir := child.Name, child.Item, len(child.children) > 0
+	// 	items = append(items, RootItemResult[T]{
+	// 		Name:        name,
+	// 		IsDirectory: isDir,
+	// 		Item:        item,
+	// 	})
+	// }
+	// return items
 }
 
 func SplitObjectName(objectName string) []string {

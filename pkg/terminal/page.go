@@ -5,11 +5,21 @@ import (
 	"github.com/rivo/tview"
 )
 
+type Hotkey struct {
+	Title   string
+	Handler func(*tcell.EventKey) *tcell.EventKey
+}
+
+func EventKey(k tcell.Key, ch rune, mod tcell.ModMask) tcell.EventKey {
+	ek := tcell.NewEventKey(k, ch, mod)
+	return *ek
+}
+
 type PageContent interface {
 	tview.Primitive
 
 	Title() string
-	Hotkeys() map[string]string
+	Hotkeys() map[tcell.EventKey]Hotkey
 	SetSearch(term string)
 }
 
@@ -63,6 +73,7 @@ func NewPage(content PageContent) *Page {
 		searchFlex: searchFlex,
 	}
 
+	hotkeys := content.Hotkeys()
 	contentFlex.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Key() {
 		case tcell.KeyEscape:
@@ -74,6 +85,13 @@ func NewPage(content PageContent) *Page {
 				return nil
 			}
 		}
+
+		for hkKey, hk := range hotkeys {
+			if event.Key() == hkKey.Key() && event.Rune() == hkKey.Rune() && event.Modifiers() == hkKey.Modifiers() {
+				return hk.Handler(event)
+			}
+		}
+
 		return event
 	})
 

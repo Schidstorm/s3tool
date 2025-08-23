@@ -12,15 +12,19 @@ func TestObjectTree(t *testing.T) {
 	tree.AddObject("folder1/file2.txt", "File 2")
 	tree.AddObject("folder2/file3.txt", "File 3")
 
-	rootItems := tree.ListRootItems()
+	rootItems := tree.ListItems("")
 	if len(rootItems) != 2 {
 		t.Errorf("Expected 2 root items, got %d", len(rootItems))
 	}
 
 	assert.Equal(t, "folder1/", rootItems[0].Name)
 	assert.Equal(t, "", rootItems[0].Item)
-	assert.Equal(t, "folder2/file3.txt", rootItems[1].Name)
-	assert.Equal(t, "File 3", rootItems[1].Item)
+	assert.Equal(t, "folder2/", rootItems[1].Name)
+
+	folder2Items := tree.ListItems("folder2/")
+	assert.Equal(t, 1, len(folder2Items))
+	assert.Equal(t, "file3.txt", folder2Items[0].Name)
+	assert.Equal(t, "File 3", folder2Items[0].Item)
 }
 
 func TestSplitObjectName(t *testing.T) {

@@ -1,6 +1,7 @@
 
-test:
-	go test -v ./...
+tests:
+	go test -v -cover -coverprofile=coverage.out ./... && \
+	go tool cover -html=coverage.out -o coverage.html
 
 build-debug:
 	mkdir -p build && \
@@ -10,13 +11,13 @@ debug: build-debug
 	./build/s3tool
 
 create_test_bucket:
-	terraform -chdir=test/deployment/modules/main init && \
-	terraform -chdir=test/deployment/modules/main apply -auto-approve
+	tofu -chdir=test/deployment/modules/main init && \
+	tofu -chdir=test/deployment/modules/main apply -auto-approve
 
 delete_test_bucket:
-	terraform -chdir=test/deployment/modules/main init && \
-	terraform -chdir=test/deployment/modules/main destroy -auto-approve
+	tofu -chdir=test/deployment/modules/main init && \
+	tofu -chdir=test/deployment/modules/main destroy -auto-approve
 
-generate-images: build-debug
+generate-screens:
 	mkdir -p screens && \
-	go run ./cmd/readme
+	go run ./cmd/screens

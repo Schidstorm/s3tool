@@ -1,8 +1,8 @@
 package terminal
 
 import (
-	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/rivo/tview"
+	"github.com/schidstorm/s3tool/pkg/s3lib"
 )
 
 var activeApp *App
@@ -12,7 +12,7 @@ type App struct {
 	root *RootPage
 }
 
-func NewApp(page PageContent) *App {
+func NewApp(page PageContent, loaders ...s3lib.ConnectorLoader) *App {
 	root := NewRootPage()
 	app := &App{
 		root:        root,
@@ -21,7 +21,7 @@ func NewApp(page PageContent) *App {
 
 	activeApp = app
 	if page == nil {
-		page = NewProfilePage()
+		page = NewProfilePage(loaders)
 	}
 
 	root.OpenPage(page)
@@ -49,6 +49,6 @@ func (a *App) SetError(err error) {
 	a.root.SetError(err)
 }
 
-func (a *App) SetS3Client(client *s3.Client, bucketName string) {
+func (a *App) SetS3Client(client s3lib.Client, bucketName string) {
 	a.root.SetS3Client(client, bucketName)
 }

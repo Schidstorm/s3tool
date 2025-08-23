@@ -7,7 +7,7 @@ if docker ps -q -f name=minio; then
 fi
 
 echo "Starting MinIO container..."
-docker run -d --name minio -p 9000:9000 minio/minio server start
+docker run -d --name minio -p 9000:9000 -p 9001:9001 minio/minio server start --console-address ":9001"
 
 echo "Writing MinIO configuration to ~/.s3tool/minio.yaml..."
 mkdir -p ~/.s3tool

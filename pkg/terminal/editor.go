@@ -6,6 +6,9 @@ import (
 	"os/exec"
 )
 
+var editCommand = []string{"editor"}
+var viewCommand = []string{"less"}
+
 func EditFile(filePath string) error {
 	return openFile(filePath, false)
 }
@@ -16,11 +19,16 @@ func ShowFile(filePath string) error {
 
 func openFile(filePath string, readonly bool) error {
 	args := []string{filePath}
-	if readonly {
-		args = append(args, "-R")
-	}
 
-	cmd := exec.Command("editor", args...)
+	var command []string
+	if readonly {
+		command = append(command, viewCommand...)
+	} else {
+		command = append(command, editCommand...)
+	}
+	command = append(command, args...)
+
+	cmd := exec.Command(command[0], command[1:]...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin

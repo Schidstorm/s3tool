@@ -4,24 +4,37 @@ import (
 	"context"
 	"errors"
 
-	"github.com/schidstorm/s3tool/pkg/profile"
+	"github.com/gdamore/tcell/v2"
+	"github.com/schidstorm/s3tool/pkg/s3lib"
 )
 
 type ProfilePage struct {
 	*ListPage
+
+	loaders []s3lib.ConnectorLoader
 }
 
-func NewProfilePage() *ProfilePage {
+func NewProfilePage(loaders []s3lib.ConnectorLoader) *ProfilePage {
 	page := &ProfilePage{
 		ListPage: NewListPage(),
+		loaders:  loaders,
 	}
 
 	page.ListPage.SetSelectedFunc(func(columns []string) {
+		if len(columns) < 2 {
+			return
+		}
+
 		typeStr := columns[0]
 		name := columns[1]
 
-		profiles := profile.List()
-		var profile profile.Connector
+		profiles, err := loadConnectors(loaders)
+		if err != nil {
+			activeApp.SetError(err)
+			return
+		}
+
+		var profile s3lib.Connector
 		for _, p := range profiles {
 			if p.Type() == typeStr && p.Name() == name {
 				profile = p
@@ -53,12 +66,26 @@ func NewProfilePage() *ProfilePage {
 	return page
 }
 
+func loadConnectors(loaders []s3lib.ConnectorLoader) ([]s3lib.Connector, error) {
+	var profiles []s3lib.Connector
+
+	for _, loader := range loaders {
+		loadedProfiles, err := loader.Load()
+		if err != nil {
+			return nil, err
+		}
+		profiles = append(profiles, loadedProfiles...)
+	}
+
+	return profiles, nil
+}
+
 func (b *ProfilePage) Title() string {
 	return "Profiles"
 }
 
-func (b *ProfilePage) Hotkeys() map[string]string {
-	return map[string]string{}
+func (b *ProfilePage) Hotkeys() map[tcell.EventKey]Hotkey {
+	return map[tcell.EventKey]Hotkey{}
 }
 
 func (b *ProfilePage) load() {
@@ -68,7 +95,12 @@ func (b *ProfilePage) load() {
 		Columns: []string{"Type", "Name"},
 	})
 
-	profiles := profile.List()
+	profiles, err := loadConnectors(b.loaders)
+	if err != nil {
+		activeApp.SetError(err)
+		return
+	}
+
 	for _, p := range profiles {
 		b.ListPage.AddRow(Row{
 			Columns: []string{p.Type(), p.Name()},
