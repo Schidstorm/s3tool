@@ -5,25 +5,16 @@ go 1.24.2
 require (
 	github.com/aws/aws-sdk-go-v2 v1.38.1
 	github.com/aws/aws-sdk-go-v2/config v1.31.2
-	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.19.0
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.87.1
 	github.com/aws/smithy-go v1.22.5
 	github.com/gdamore/tcell/v2 v2.9.0
 	github.com/rivo/tview v0.0.0-20250625164341-a4a78f1e05cb
+	golang.org/x/image v0.30.0
 )
 
 require (
-	github.com/creack/pty v1.1.24 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/golang/protobuf v1.3.3 // indirect
-	github.com/google/goexpect v0.0.0-20210430020637-ab937bf7fd6f // indirect
-	github.com/google/goterm v0.0.0-20190703233501-fc88cf888a3f // indirect
-	github.com/hinshun/vt10x v0.0.0-20220301184237-5011da428d02 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	golang.org/x/crypto v0.23.0 // indirect
-	golang.org/x/image v0.30.0 // indirect
-	google.golang.org/genproto v0.0.0-20190819201941-24fa4b261c55 // indirect
-	google.golang.org/grpc v1.31.0 // indirect
 )
 
 require (
