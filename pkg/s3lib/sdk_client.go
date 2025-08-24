@@ -203,6 +203,11 @@ func ErrorText(err error) string {
 			return netUrlErr.Error()
 		}
 
+		var respErr *smithy.GenericAPIError
+		if ok := findError(err, &respErr); ok {
+			reason = respErr.ErrorMessage()
+		}
+
 		if reason == "" {
 			reason = smithyErr.Error()
 		}

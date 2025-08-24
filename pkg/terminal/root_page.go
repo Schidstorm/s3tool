@@ -109,6 +109,7 @@ func (a *RootPage) openPage(page *Page) {
 	a.pages.SetTitleColor(titleFg)
 	a.pages.SwitchToPage(page.Title())
 	a.hotkeyInfo.Update(page.content)
+	a.profileInfo.UpdateContext(page.content.Context())
 }
 
 func (a *RootPage) closePage() {

@@ -11,32 +11,22 @@ import (
 )
 
 type ObjectPage struct {
-	*tview.Flex
-	table *tview.Table
+	*tview.Table
 
 	context    Context
 	searchTerm string
 }
 
 func NewObjectPage(context Context) *ObjectPage {
-	table := tview.NewTable().SetSelectable(true, false)
-	table.SetFixed(1, 0)
-
-	flex := tview.NewFlex()
-	flex.SetDirection(tview.FlexRow)
-	flex.AddItem(table, 0, 1, true)
+	table := tview.NewTable().SetSelectable(false, false)
 
 	page := &ObjectPage{
-		table:   table,
-		Flex:    flex,
+		Table:   table,
 		context: context,
 	}
 
-	page.load()
-
 	table.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Key() {
-		case tcell.KeyDelete:
 		case tcell.KeyRune:
 			if event.Rune() == 'v' {
 				err := viewObject(context)
@@ -71,7 +61,7 @@ func (b *ObjectPage) Context() Context {
 }
 
 func (b *ObjectPage) Title() string {
-	title := "Objects in " + b.context.Bucket()
+	title := "Objects"
 	if b.context.ObjectKey() != "" {
 		title += " - " + b.context.ObjectKey()
 	}
@@ -110,7 +100,6 @@ type item struct {
 }
 
 func (b *ObjectPage) load() {
-	b.table.Clear()
 
 	obj, err := b.context.S3Client().GetObject(context.Background(), b.context.Bucket(), b.context.ObjectKey())
 	if err != nil {
@@ -147,18 +136,19 @@ func (b *ObjectPage) load() {
 		items = append(items, item{title: "Tags", value: tags})
 	}
 
-	for row, it := range items {
+	b.Table.Clear()
+	var rowIndex int
+	for _, it := range items {
 		if !matchAnyItems(b.searchTerm, append([]string{it.title}, it.value...)) {
 			continue
 		}
 
-		b.table.SetCell(row, 0, tview.NewTableCell(it.title).
-			SetTextColor(tcell.ColorYellow).
-			SetAlign(tview.AlignLeft).
-			SetSelectable(false))
-		b.table.SetCell(row, 1, tview.NewTableCell(strings.Join(it.value, ", ")).
-			SetTextColor(tcell.ColorWhite).
-			SetAlign(tview.AlignLeft).
-			SetSelectable(false))
+		b.Table.SetCell(rowIndex, 0, tview.NewTableCell(it.title).
+			SetStyle(DefaultTheme.ProfileKey).
+			SetAlign(tview.AlignLeft))
+		b.Table.SetCell(rowIndex, 1, tview.NewTableCell(strings.Join(it.value, ", ")).
+			SetSelectedStyle(DefaultTheme.ProfileValue).
+			SetAlign(tview.AlignLeft))
+		rowIndex++
 	}
 }

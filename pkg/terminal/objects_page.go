@@ -65,7 +65,7 @@ func (b *ObjectsPage) Context() Context {
 }
 
 func (b *ObjectsPage) Title() string {
-	title := "Objects in " + b.context.Bucket()
+	title := "Objects"
 	if b.context.ObjectKey() != "" {
 		title += " - " + b.context.ObjectKey()
 	}
