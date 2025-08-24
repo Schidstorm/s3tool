@@ -195,30 +195,68 @@ func ErrorText(err error) string {
 		return ""
 	}
 
-	var smithyErr *smithy.OperationError
-	if ok := findError(err, &smithyErr); ok {
+	if smithyErr, ok := findError[*smithy.OperationError](err); ok {
 		reason := ""
-		var netUrlErr *net.OpError
-		if ok := findError(err, &netUrlErr); ok {
-			return netUrlErr.Error()
+		if err, ok := findError[*net.OpError](err); ok {
+			return err.Error()
 		}
-
-		var respErr *smithy.GenericAPIError
-		if ok := findError(err, &respErr); ok {
-			reason = respErr.ErrorMessage()
+		if err, ok := findError[*smithy.GenericAPIError](err); ok {
+			reason = err.ErrorMessage()
+		}
+		if err, ok := findError[*types.BucketAlreadyExists](err); ok {
+			reason = err.Error()
+		}
+		if err, ok := findError[*types.BucketAlreadyOwnedByYou](err); ok {
+			reason = err.Error()
+		}
+		if err, ok := findError[*types.EncryptionTypeMismatch](err); ok {
+			reason = err.Error()
+		}
+		if err, ok := findError[*types.IdempotencyParameterMismatch](err); ok {
+			reason = err.Error()
+		}
+		if err, ok := findError[*types.InvalidObjectState](err); ok {
+			reason = err.Error()
+		}
+		if err, ok := findError[*types.InvalidRequest](err); ok {
+			reason = err.Error()
+		}
+		if err, ok := findError[*types.InvalidWriteOffset](err); ok {
+			reason = err.Error()
+		}
+		if err, ok := findError[*types.NoSuchBucket](err); ok {
+			reason = err.Error()
+		}
+		if err, ok := findError[*types.NoSuchKey](err); ok {
+			reason = err.Error()
+		}
+		if err, ok := findError[*types.NoSuchUpload](err); ok {
+			reason = err.Error()
+		}
+		if err, ok := findError[*types.NotFound](err); ok {
+			reason = err.Error()
+		}
+		if err, ok := findError[*types.ObjectAlreadyInActiveTierError](err); ok {
+			reason = err.Error()
+		}
+		if err, ok := findError[*types.ObjectNotInActiveTierError](err); ok {
+			reason = err.Error()
+		}
+		if err, ok := findError[*types.TooManyParts](err); ok {
+			reason = err.Error()
 		}
 
 		if reason == "" {
 			reason = smithyErr.Error()
 		}
 
-		return fmt.Sprintf("%s: %s", smithyErr.Operation(), reason)
+		return fmt.Sprintf("%s - %s", smithyErr.Operation(), reason)
 	}
 
 	return err.Error()
 }
 
-func findError[T any](e error, result *T) bool {
+func findError[T any](e error) (T, bool) {
 	var errorList []error
 	currentErr := e
 	for {
@@ -231,10 +269,10 @@ func findError[T any](e error, result *T) bool {
 
 	for _, err := range errorList {
 		if e, ok := err.(T); ok {
-			*result = e
-			return true
+			return e, true
 		}
 	}
 
-	return false
+	var zero T
+	return zero, false
 }
