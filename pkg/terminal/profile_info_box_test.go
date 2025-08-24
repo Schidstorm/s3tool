@@ -20,10 +20,11 @@ func TestProfileInfoBoxPathStyle(t *testing.T) {
 	box := NewProfileInfoBox()
 	box.UpdateContext(NewContext().WithClient(s3lib.NewSdkClient(client)).WithBucket("test-bucket"))
 	rows := getTableRows(box.table)
-	assert.Equal(t, 2, len(rows))
+	assert.Equal(t, 3, len(rows))
 	assert.EqualValues(t, [][]string{
 		{"Endpoint:", "https://s3.us-west-2.amazonaws.com:654/test-bucket"},
 		{"Region:", "us-west-2"},
+		{"Bucket:", "test-bucket"},
 	}, rows)
 }
 
@@ -37,10 +38,11 @@ func TestProfileInfoBoxNoPathStyle(t *testing.T) {
 	box := NewProfileInfoBox()
 	box.UpdateContext(NewContext().WithClient(s3lib.NewSdkClient(client)).WithBucket("test-bucket"))
 	rows := getTableRows(box.table)
-	assert.Equal(t, 2, len(rows))
+	assert.Equal(t, 3, len(rows))
 	assert.EqualValues(t, [][]string{
 		{"Endpoint:", "https://test-bucket.asasd:654"},
 		{"Region:", "us-west-2"},
+		{"Bucket:", "test-bucket"},
 	}, rows)
 }
 
