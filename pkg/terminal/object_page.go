@@ -144,10 +144,10 @@ func (b *ObjectPage) load() {
 		}
 
 		b.Table.SetCell(rowIndex, 0, tview.NewTableCell(it.title).
-			SetStyle(DefaultTheme.ProfileKey).
+			SetStyle(DefaultTheme.TableHeader).
 			SetAlign(tview.AlignLeft))
 		b.Table.SetCell(rowIndex, 1, tview.NewTableCell(strings.Join(it.value, ", ")).
-			SetSelectedStyle(DefaultTheme.ProfileValue).
+			SetSelectedStyle(DefaultTheme.TableCell).
 			SetAlign(tview.AlignLeft))
 		rowIndex++
 	}
