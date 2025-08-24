@@ -6,6 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/rivo/tview"
+	"github.com/schidstorm/s3tool/pkg/s3lib"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -17,13 +18,13 @@ func TestProfileInfoBoxPathStyle(t *testing.T) {
 	})
 
 	box := NewProfileInfoBox()
-	box.Update(client, "test-bucket")
-	rows := getTableRows(box.Table)
+	box.UpdateContext(NewContext().WithClient(s3lib.NewSdkClient(client)).WithBucket("test-bucket"))
+	rows := getTableRows(box.table)
 	assert.Equal(t, 2, len(rows))
-	assert.Equal(t, "Region", rows[0][0])
-	assert.Equal(t, "us-west-2", rows[0][1])
-	assert.Equal(t, "Endpoint", rows[1][0])
-	assert.Equal(t, "https://s3.us-west-2.amazonaws.com:654/test-bucket", rows[1][1])
+	assert.EqualValues(t, [][]string{
+		{"Endpoint:", "https://s3.us-west-2.amazonaws.com:654/test-bucket"},
+		{"Region:", "us-west-2"},
+	}, rows)
 }
 
 func TestProfileInfoBoxNoPathStyle(t *testing.T) {
@@ -34,13 +35,13 @@ func TestProfileInfoBoxNoPathStyle(t *testing.T) {
 	})
 
 	box := NewProfileInfoBox()
-	box.Update(client, "test-bucket")
-	rows := getTableRows(box.Table)
+	box.UpdateContext(NewContext().WithClient(s3lib.NewSdkClient(client)).WithBucket("test-bucket"))
+	rows := getTableRows(box.table)
 	assert.Equal(t, 2, len(rows))
-	assert.Equal(t, "Region", rows[0][0])
-	assert.Equal(t, "us-west-2", rows[0][1])
-	assert.Equal(t, "Endpoint", rows[1][0])
-	assert.Equal(t, "https://test-bucket.asasd:654", rows[1][1])
+	assert.EqualValues(t, [][]string{
+		{"Endpoint:", "https://test-bucket.asasd:654"},
+		{"Region:", "us-west-2"},
+	}, rows)
 }
 
 func TestProfileInfoBoxNoPathStyleNoBucket(t *testing.T) {
@@ -51,21 +52,20 @@ func TestProfileInfoBoxNoPathStyleNoBucket(t *testing.T) {
 	})
 
 	box := NewProfileInfoBox()
-	box.Update(client, "")
-	rows := getTableRows(box.Table)
+	box.UpdateContext(NewContext().WithClient(s3lib.NewSdkClient(client)))
+	rows := getTableRows(box.table)
 	assert.Equal(t, 2, len(rows))
-	assert.Equal(t, "Region", rows[0][0])
-	assert.Equal(t, "us-west-2", rows[0][1])
-	assert.Equal(t, "Endpoint", rows[1][0])
-	assert.Equal(t, "https://asasd:654/", rows[1][1])
+	assert.EqualValues(t, [][]string{
+		{"Endpoint:", "https://asasd:654/"},
+		{"Region:", "us-west-2"},
+	}, rows)
 }
 
 func TestProfileInfoBoxNoClient(t *testing.T) {
 	box := NewProfileInfoBox()
-	box.Update(nil, "")
-	rows := getTableRows(box.Table)
-	assert.Equal(t, 1, len(rows))
-	assert.Equal(t, "No S3 client available", rows[0][0])
+	box.UpdateContext(NewContext())
+	rows := getTableRows(box.table)
+	assert.Equal(t, 0, len(rows))
 }
 
 func getTableRows(t *tview.Table) [][]string {

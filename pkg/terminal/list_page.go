@@ -3,7 +3,6 @@ package terminal
 import (
 	"strings"
 
-	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
 
@@ -12,16 +11,14 @@ type Row struct {
 	Columns []string
 }
 
-type ListPage struct {
+type ListPage[TItem any] struct {
 	*tview.Flex
 
-	table      *tview.Table
-	searchTerm string
-
-	rows []Row
+	tviewTable *tview.Table
+	table      *Table[TItem]
 }
 
-func NewListPage() *ListPage {
+func NewListPage[TItem any]() *ListPage[TItem] {
 	table := tview.NewTable().SetSelectable(true, false)
 	table.SetFixed(1, 0)
 
@@ -29,60 +26,59 @@ func NewListPage() *ListPage {
 	flex.SetDirection(tview.FlexRow)
 	flex.AddItem(table, 0, 1, true)
 
-	box := &ListPage{
-		table: table,
-		Flex:  flex,
+	box := &ListPage[TItem]{
+		tviewTable: table,
+		Flex:       flex,
+		table:      NewTable[TItem](),
 	}
 
 	box.update()
 	return box
 }
 
-func (b *ListPage) SetSelectedFunc(f func(columns []string)) {
+func (b *ListPage[TItem]) SetSelectedFunc(f func(item TItem)) {
 	if f == nil {
-		b.table.SetSelectedFunc(nil)
+		b.tviewTable.SetSelectedFunc(nil)
 		return
 	}
 
-	b.table.SetSelectedFunc(func(row, column int) {
-		var columns []string
-		if row >= 0 && row < len(b.rows) {
-			for column := 0; column < b.table.GetColumnCount(); column++ {
-				columns = append(columns, b.table.GetCell(row, column).Text)
-			}
+	b.tviewTable.SetSelectedFunc(func(row, column int) {
+		item, ok := b.table.GetRowItem(row - 1)
+		if !ok {
+			return
 		}
-		f(columns)
+		f(item)
 	})
 }
 
-func (b *ListPage) SetSearch(search string) {
-	b.searchTerm = search
+func (b *ListPage[TItem]) SetSearch(search string) {
+	b.table.SetFilter(search)
 	b.update()
 }
 
-func (b *ListPage) update() {
-	b.table.Clear()
+func (b *ListPage[TItem]) update() {
+	b.tviewTable.Clear()
 
-	rowIndex := 0
-	for _, row := range b.rows {
-		if !matchAnyItems(b.searchTerm, row.Columns) {
-			continue
-		}
+	columns := b.table.Columns()
+	for colIndex, col := range columns {
+		cell := tview.NewTableCell(col)
+		cell.SetAlign(tview.AlignLeft)
+		cell.SetExpansion(1)
+		cell.SetStyle(DefaultTheme.TableHeader)
+		cell.SetSelectable(false)
+		b.tviewTable.SetCell(0, colIndex, cell)
+	}
 
-		for columnIndex, item := range row.Columns {
+	for rowIndex, row := range b.table.Rows() {
+		for columnIndex, item := range row {
 			cell := tview.NewTableCell(item)
 			cell.SetAlign(tview.AlignLeft)
 			cell.SetExpansion(1)
-			if row.Header {
-				cell.SetTextColor(tcell.ColorYellow)
-				cell.SetSelectable(false)
-			} else {
-				cell.SetTextColor(tcell.ColorWhite)
-				cell.SetSelectable(true)
-			}
-			b.table.SetCell(rowIndex, columnIndex, cell)
+			cell.SetStyle(DefaultTheme.TableCell)
+			cell.SetSelectable(true)
+			cell.SelectedStyle = DefaultTheme.TableSelected
+			b.tviewTable.SetCell(rowIndex+1, columnIndex, cell)
 		}
-		rowIndex++
 	}
 }
 
@@ -105,49 +101,29 @@ func containsIgnoreCase(s, substr string) bool {
 	return strings.Contains(strings.ToLower(s), strings.ToLower(substr))
 }
 
-func (b *ListPage) AddRow(row Row) {
-	b.rows = append(b.rows, row)
+func (b *ListPage[TItem]) Add(row TItem) {
+	b.table.Add(row)
 	b.update()
 }
 
-func (b *ListPage) AddRows(rows []Row) {
-	b.rows = append(b.rows, rows...)
-	b.update()
-}
-
-func (b *ListPage) AddRowAt(index int, row Row) {
-	if index < 0 || index > len(b.rows) {
-		return
+func (b *ListPage[TItem]) AddAll(rows []TItem) {
+	for _, row := range rows {
+		b.table.Add(row)
 	}
-	b.rows = append(b.rows[:index], append([]Row{row}, b.rows[index:]...)...)
 	b.update()
 }
 
-func (b *ListPage) AddRowsAt(index int, rows []Row) {
-	if index < 0 || index > len(b.rows) {
-		return
-	}
-	b.rows = append(b.rows[:index], append(rows, b.rows[index:]...)...)
+func (b *ListPage[TItem]) ClearRows() {
+	b.table.Clear()
 	b.update()
 }
 
-func (b *ListPage) RemoveRow(index int) {
-	if index < 0 || index >= len(b.rows) {
-		return
-	}
-	b.rows = append(b.rows[:index], b.rows[index+1:]...)
-	b.update()
+func (b *ListPage[TItem]) GetSelectedRow() (TItem, bool) {
+	row, _ := b.tviewTable.GetSelection()
+	return b.table.GetRowItem(row - 1)
 }
 
-func (b *ListPage) ClearRows() {
-	b.rows = nil
+func (b *ListPage[TItem]) AddColumn(name string, filler func(item TItem) string) {
+	b.table.AddColumn(name, filler)
 	b.update()
-}
-
-func (b *ListPage) GetSelectedRow() (int, Row) {
-	row, _ := b.table.GetSelection()
-	if row < 0 || row >= len(b.rows) {
-		return -1, Row{}
-	}
-	return row, b.rows[row]
 }

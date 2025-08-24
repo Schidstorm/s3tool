@@ -1,20 +1,17 @@
-package profile
+package s3lib
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/go-ini/ini"
 )
 
 type AwsLoader struct{}
 
-func (l *AwsLoader) LoadProfiles() ([]Connector, error) {
+func (l *AwsLoader) Load() ([]Connector, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user home directory: %w", err)
@@ -48,32 +45,7 @@ func (l *AwsLoader) LoadProfiles() ([]Connector, error) {
 
 	var profileList []Connector
 	for profile := range profiles {
-		profileList = append(profileList, &AwsProfileConnector{name: profile})
+		profileList = append(profileList, &AwsConnector{name: profile})
 	}
 	return profileList, nil
-}
-
-type AwsProfileConnector struct {
-	name string
-}
-
-func (c *AwsProfileConnector) Name() string {
-	return c.name
-}
-
-func (c *AwsProfileConnector) Type() string {
-	return "aws"
-}
-
-func (c *AwsProfileConnector) CreateClient(ctx context.Context) (*s3.Client, error) {
-	opts := []func(*config.LoadOptions) error{
-		config.WithSharedConfigProfile(c.name),
-	}
-
-	sdkConfig, err := config.LoadDefaultConfig(ctx, opts...)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load AWS SDK config for profile %s: %w", c.name, err)
-	}
-
-	return s3.NewFromConfig(sdkConfig), nil
 }

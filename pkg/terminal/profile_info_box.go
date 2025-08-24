@@ -1,43 +1,48 @@
 package terminal
 
 import (
-	"context"
-
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/rivo/tview"
 )
 
 type ProfileInfoBox struct {
-	*tview.Table
+	*tview.Flex
+	table *tview.Table
 }
 
 func NewProfileInfoBox() *ProfileInfoBox {
 	table := tview.NewTable().SetBorders(false)
 	table.SetSelectable(false, false)
-	table.Box.SetBorder(true)
+	table.Box.SetBorder(false)
 	table.Box.SetTitle("Profile Info")
 	table.Box.SetTitleAlign(tview.AlignLeft)
 
+	flex := tview.NewFlex()
+	flex.SetDirection(tview.FlexColumn)
+	flex.AddItem(tview.NewBox(), 1, 0, false) // left padding
+	flex.AddItem(table, 0, 1, false)
+
 	info := &ProfileInfoBox{
-		Table: table,
+		Flex:  flex,
+		table: table,
 	}
 
 	return info
 }
 
-func (info *ProfileInfoBox) Update(client *s3.Client, bucketName string) {
-	info.Clear()
+func (info *ProfileInfoBox) UpdateContext(c Context) {
+	info.table.Clear()
 
-	if client == nil {
-		info.SetCell(0, 0, tview.NewTableCell("No S3 client available").SetTextColor(tview.Styles.PrimaryTextColor))
+	if c.S3Client() == nil {
 		return
 	}
 
-	infoItems := s3ClientToInfos(client, bucketName)
+	infoItems := s3ClientToInfos(c)
 	for row, infoItem := range infoItems {
-		info.SetCell(row, 0, tview.NewTableCell(infoItem.Title).SetTextColor(tview.Styles.SecondaryTextColor))
-		info.SetCell(row, 1, tview.NewTableCell(infoItem.Info).SetTextColor(tview.Styles.PrimaryTextColor))
+		info.table.SetCell(row, 0, tview.NewTableCell(infoItem.Title).SetStyle(DefaultTheme.ProfileKey))
+		info.table.SetCell(row, 1,
+			tview.NewTableCell(infoItem.Info).
+				SetStyle(DefaultTheme.ProfileValue),
+		)
 	}
 }
 
@@ -46,22 +51,21 @@ type s3ClientInfoItem struct {
 	Info  string
 }
 
-func s3ClientToInfos(client *s3.Client, bucketName string) []s3ClientInfoItem {
-	items := []s3ClientInfoItem{
-		{Title: "Region", Info: client.Options().Region},
-	}
+func s3ClientToInfos(c Context) []s3ClientInfoItem {
+	items := []s3ClientInfoItem{}
 
-	ep, err := client.Options().EndpointResolverV2.ResolveEndpoint(context.Background(), s3.EndpointParameters{
-		Bucket:         aws.String(bucketName),
-		Region:         aws.String(client.Options().Region),
-		UseFIPS:        aws.Bool(client.Options().EndpointOptions.UseFIPSEndpoint == aws.FIPSEndpointStateEnabled),
-		UseDualStack:   aws.Bool(client.Options().EndpointOptions.UseDualStackEndpoint == aws.DualStackEndpointStateEnabled),
-		Endpoint:       client.Options().BaseEndpoint,
-		ForcePathStyle: aws.Bool(client.Options().UsePathStyle),
-		Accelerate:     aws.Bool(client.Options().UseAccelerate),
-	})
-	if err == nil {
-		items = append(items, s3ClientInfoItem{Title: "Endpoint", Info: ep.URI.String()})
+	parameters := c.S3Client().ConnectionParameters(c.Bucket())
+	if parameters.Endpoint != nil {
+		items = append(items, s3ClientInfoItem{
+			Title: "Endpoint:",
+			Info:  *parameters.Endpoint,
+		})
+	}
+	if parameters.Region != nil {
+		items = append(items, s3ClientInfoItem{
+			Title: "Region:",
+			Info:  *parameters.Region,
+		})
 	}
 
 	return items

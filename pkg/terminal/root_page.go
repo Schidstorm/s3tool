@@ -1,9 +1,9 @@
 package terminal
 
 import (
-	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+	"github.com/schidstorm/s3tool/pkg/s3lib"
 )
 
 type RootPage struct {
@@ -22,7 +22,6 @@ func NewRootPage() *RootPage {
 	header.SetDirection(tview.FlexColumn)
 
 	profileInfo := NewProfileInfoBox()
-	profileInfo.Update(nil, "")
 	header.AddItem(profileInfo, 0, 1, false)
 
 	hotkeyInfo := NewHotkeyInfoBox()
@@ -31,12 +30,14 @@ func NewRootPage() *RootPage {
 
 	content := tview.NewPages()
 	content.SetBorder(true)
+	content.SetBorderStyle(DefaultTheme.PageBorder)
+	content.SetBorderPadding(0, 1, 1, 1)
 
 	statusText := tview.NewTextView().SetTextAlign(tview.AlignCenter)
 
 	flex := tview.NewFlex()
 	flex.SetDirection(tview.FlexRow)
-	flex.AddItem(header, 10, 1, false)
+	flex.AddItem(header, 8, 1, false)
 	flex.AddItem(content, 0, 1, true)
 	flex.AddItem(statusText, 1, 1, false)
 
@@ -65,12 +66,15 @@ func NewRootPage() *RootPage {
 	return a
 }
 
-func (a *RootPage) Modal(p tview.Primitive, name string, width, height int) {
+func (a *RootPage) Modal(p ModalBuilder, name string, width, height int) {
+	content := p(func() {
+		a.CloseModal(name)
+	})
 	modal := tview.NewFlex().
 		AddItem(nil, 0, 1, false).
 		AddItem(tview.NewFlex().SetDirection(tview.FlexRow).
 			AddItem(nil, 0, 1, false).
-			AddItem(p, height, 1, true).
+			AddItem(content, height, 1, true).
 			AddItem(nil, 0, 1, false), width, 1, true).
 		AddItem(nil, 0, 1, false)
 
@@ -101,6 +105,8 @@ func (a *RootPage) OpenPage(pageContent PageContent) {
 func (a *RootPage) openPage(page *Page) {
 	a.pages.AddPage(page.Title(), page, true, true)
 	a.pages.SetTitle(" " + page.Title() + " ")
+	titleFg, _, _ := DefaultTheme.PageTitlePrimary.Decompose()
+	a.pages.SetTitleColor(titleFg)
 	a.pages.SwitchToPage(page.Title())
 	a.hotkeyInfo.Update(page.content)
 }
@@ -116,10 +122,11 @@ func (a *RootPage) closePage() {
 }
 
 func (a *RootPage) SetError(err error) {
-	a.statusText.SetText("Error: " + err.Error())
+	errorText := s3lib.ErrorText(err)
+	a.statusText.SetText("Error: " + errorText)
 	a.statusText.SetTextColor(tcell.ColorRed)
 }
 
-func (a *RootPage) SetS3Client(client *s3.Client, bucketName string) {
-	a.profileInfo.Update(client, bucketName)
+func (a *RootPage) UpdateContext(c Context) {
+	a.profileInfo.UpdateContext(c)
 }

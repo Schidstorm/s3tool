@@ -1,6 +1,10 @@
-debug-build
+build
 error.log
 .vscode
+coverage.html
+coverage.out
+
+/screens
 
 .terraform.lock.hcl
 # Local .terraform directories

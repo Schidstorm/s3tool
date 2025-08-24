@@ -1,23 +1,23 @@
 
+tests:
+	go test -v -cover -coverprofile=coverage.out ./... && \
+	go tool cover -html=coverage.out -o coverage.html
 
-# create function
-define build_debug
-	$(shell mkdir -p debug-build && \
-		    CGO_ENABLED=1 GO111MODULE=on go build -tags codes -gcflags="all=-N -l" -o debug-build/$(1) ./cmd/$(1) && \
-			./debug-build/$(1))
-endef
+build-debug:
+	mkdir -p build && \
+	CGO_ENABLED=1 GO111MODULE=on go build -tags codes -gcflags="all=-N -l" -o build/s3tool ./cmd/s3tool
 
-test:
-	go test -v ./...
-
-debug:
-	$(call build_debug,s3tool)
+debug: build-debug
+	./build/s3tool
 
 create_test_bucket:
-	terraform -chdir=test/deployment/modules/main init && \
-	terraform -chdir=test/deployment/modules/main apply -auto-approve
+	tofu -chdir=test/deployment/modules/main init && \
+	tofu -chdir=test/deployment/modules/main apply -auto-approve
 
 delete_test_bucket:
-	terraform -chdir=test/deployment/modules/main init && \
-	terraform -chdir=test/deployment/modules/main destroy -auto-approve
+	tofu -chdir=test/deployment/modules/main init && \
+	tofu -chdir=test/deployment/modules/main destroy -auto-approve
 
+generate-screens:
+	mkdir -p screens && \
+	go run ./cmd/screens

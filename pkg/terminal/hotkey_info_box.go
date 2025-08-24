@@ -1,6 +1,11 @@
 package terminal
 
-import "github.com/rivo/tview"
+import (
+	"strings"
+
+	"github.com/gdamore/tcell/v2"
+	"github.com/rivo/tview"
+)
 
 type HotkeyInfoBox struct {
 	*tview.Table
@@ -9,7 +14,7 @@ type HotkeyInfoBox struct {
 func NewHotkeyInfoBox() *HotkeyInfoBox {
 	table := tview.NewTable().SetBorders(false)
 	table.SetSelectable(false, false)
-	table.Box.SetBorder(true)
+	table.Box.SetBorder(false)
 	table.Box.SetTitle("Hotkeys")
 	table.Box.SetTitleAlign(tview.AlignLeft)
 
@@ -29,17 +34,37 @@ func (info *HotkeyInfoBox) Update(pageContent PageContent) {
 
 	hotkeys := pageContent.Hotkeys()
 	row := 0
-	for key, title := range hotkeys {
-		titleCell := tview.NewTableCell(title)
-		titleCell.SetTextColor(tview.Styles.PrimaryTextColor)
-		titleCell.SetExpansion(5)
-
-		keyCell := tview.NewTableCell(key)
-		keyCell.SetTextColor(tview.Styles.PrimaryTextColor)
+	for key, hk := range hotkeys {
+		keyCell := tview.NewTableCell(eventKeyToString(key))
+		keyCell.SetStyle(DefaultTheme.HotkeyKey)
 		keyCell.SetExpansion(1)
+
+		titleCell := tview.NewTableCell(hk.Title)
+		titleCell.SetStyle(DefaultTheme.HotkeyTitle)
+		titleCell.SetExpansion(5)
 
 		info.SetCell(row, 0, keyCell)
 		info.SetCell(row, 1, titleCell)
 		row++
 	}
+}
+
+func eventKeyToString(key tcell.EventKey) string {
+	var keyNameParts []string
+	if key.Key() == tcell.KeyRune {
+		keyNameParts = []string{string(key.Rune())}
+	} else {
+		keyNameParts = []string{strings.ToLower(key.Name())}
+	}
+
+	if key.Modifiers()&tcell.ModCtrl != 0 {
+		keyNameParts = append([]string{"ctrl"}, keyNameParts...)
+	}
+	if key.Modifiers()&tcell.ModAlt != 0 {
+		keyNameParts = append([]string{"alt"}, keyNameParts...)
+	}
+	if key.Modifiers()&tcell.ModShift != 0 {
+		keyNameParts = append([]string{"shift"}, keyNameParts...)
+	}
+	return "<" + strings.Join(keyNameParts, "+") + ">"
 }
