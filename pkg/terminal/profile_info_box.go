@@ -67,6 +67,12 @@ func s3ClientToInfos(c Context) []s3ClientInfoItem {
 			Info:  *parameters.Region,
 		})
 	}
+	if c.Bucket() != "" {
+		items = append(items, s3ClientInfoItem{
+			Title: "Bucket:",
+			Info:  c.Bucket(),
+		})
+	}
 
 	return items
 }

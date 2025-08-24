@@ -18,7 +18,7 @@ type Theme struct {
 var DefaultTheme = Theme{
 	HotkeyKey:          tcell.StyleDefault.Foreground(tcell.ColorNavy),
 	HotkeyTitle:        tcell.StyleDefault.Foreground(tcell.ColorGray),
-	TableHeader:        tcell.StyleDefault.Foreground(tcell.ColorWhite),
+	TableHeader:        tcell.StyleDefault.Foreground(tcell.ColorWhite).Bold(true),
 	TableSelected:      tcell.StyleDefault.Foreground(tcell.ColorBlack).Background(tcell.ColorLightBlue),
 	TableCell:          tcell.StyleDefault.Foreground(tcell.ColorWhite),
 	PageBorder:         tcell.StyleDefault.Foreground(tcell.ColorNavy),
