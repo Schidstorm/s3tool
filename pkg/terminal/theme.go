@@ -3,8 +3,8 @@ package terminal
 import "github.com/gdamore/tcell/v2"
 
 type Theme struct {
-	Hotkey             tcell.Style
-	HotkeyLabel        tcell.Style
+	HotkeyKey          tcell.Style
+	HotkeyTitle        tcell.Style
 	TableHeader        tcell.Style
 	TableSelected      tcell.Style
 	TableCell          tcell.Style
@@ -16,8 +16,8 @@ type Theme struct {
 }
 
 var DefaultTheme = Theme{
-	Hotkey:             tcell.StyleDefault.Foreground(tcell.ColorNavy),
-	HotkeyLabel:        tcell.StyleDefault.Foreground(tcell.ColorGray),
+	HotkeyKey:          tcell.StyleDefault.Foreground(tcell.ColorNavy),
+	HotkeyTitle:        tcell.StyleDefault.Foreground(tcell.ColorGray),
 	TableHeader:        tcell.StyleDefault.Foreground(tcell.ColorWhite),
 	TableSelected:      tcell.StyleDefault.Foreground(tcell.ColorBlack).Background(tcell.ColorLightBlue),
 	TableCell:          tcell.StyleDefault.Foreground(tcell.ColorWhite),

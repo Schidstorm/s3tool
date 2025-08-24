@@ -22,7 +22,6 @@ func NewRootPage() *RootPage {
 	header.SetDirection(tview.FlexColumn)
 
 	profileInfo := NewProfileInfoBox()
-	profileInfo.Update(nil, "")
 	header.AddItem(profileInfo, 0, 1, false)
 
 	hotkeyInfo := NewHotkeyInfoBox()
@@ -67,12 +66,15 @@ func NewRootPage() *RootPage {
 	return a
 }
 
-func (a *RootPage) Modal(p tview.Primitive, name string, width, height int) {
+func (a *RootPage) Modal(p ModalBuilder, name string, width, height int) {
+	content := p(func() {
+		a.CloseModal(name)
+	})
 	modal := tview.NewFlex().
 		AddItem(nil, 0, 1, false).
 		AddItem(tview.NewFlex().SetDirection(tview.FlexRow).
 			AddItem(nil, 0, 1, false).
-			AddItem(p, height, 1, true).
+			AddItem(content, height, 1, true).
 			AddItem(nil, 0, 1, false), width, 1, true).
 		AddItem(nil, 0, 1, false)
 
@@ -125,6 +127,6 @@ func (a *RootPage) SetError(err error) {
 	a.statusText.SetTextColor(tcell.ColorRed)
 }
 
-func (a *RootPage) SetS3Client(client s3lib.Client, bucketName string) {
-	a.profileInfo.Update(client, bucketName)
+func (a *RootPage) UpdateContext(c Context) {
+	a.profileInfo.UpdateContext(c)
 }

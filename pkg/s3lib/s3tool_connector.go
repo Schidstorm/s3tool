@@ -52,5 +52,5 @@ func (c *S3ProfileConnector) CreateClient(ctx context.Context) (Client, error) {
 		}
 	})
 
-	return &SdkClient{Client: client}, nil
+	return NewSdkClient(client), nil
 }

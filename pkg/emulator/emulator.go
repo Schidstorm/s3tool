@@ -52,10 +52,6 @@ func (e *Emulator) Run(cols, rows int) error {
 	return e.app.Run()
 }
 
-func (e *Emulator) Resize(cols, rows int) {
-	e.app.GetScreen().SetSize(cols, rows)
-}
-
 func (e *Emulator) Close() {
 	e.app.App.Application.Stop()
 }

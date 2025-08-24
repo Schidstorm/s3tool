@@ -2,63 +2,36 @@ package terminal
 
 import (
 	"context"
-	"errors"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/schidstorm/s3tool/pkg/s3lib"
 )
 
 type ProfilePage struct {
-	*ListPage
+	*ListPage[s3lib.Connector]
 
 	loaders []s3lib.ConnectorLoader
+	context Context
 }
 
-func NewProfilePage(loaders []s3lib.ConnectorLoader) *ProfilePage {
+func NewProfilePage(c Context, loaders []s3lib.ConnectorLoader) *ProfilePage {
 	page := &ProfilePage{
-		ListPage: NewListPage(),
+		ListPage: NewListPage[s3lib.Connector](),
 		loaders:  loaders,
+		context:  c,
 	}
 
-	page.ListPage.SetSelectedFunc(func(columns []string) {
-		if len(columns) < 2 {
-			return
-		}
+	page.ListPage.AddColumn("Type", func(item s3lib.Connector) string { return item.Type() })
+	page.ListPage.AddColumn("Name", func(item s3lib.Connector) string { return item.Name() })
 
-		typeStr := columns[0]
-		name := columns[1]
-
-		profiles, err := loadConnectors(loaders)
+	page.ListPage.SetSelectedFunc(func(connector s3lib.Connector) {
+		client, err := connector.CreateClient(context.Background())
 		if err != nil {
-			activeApp.SetError(err)
+			c.SetError(err)
 			return
 		}
 
-		var profile s3lib.Connector
-		for _, p := range profiles {
-			if p.Type() == typeStr && p.Name() == name {
-				profile = p
-				break
-			}
-		}
-		if profile == nil {
-			activeApp.SetError(errors.New("profile not found"))
-			return
-		}
-
-		client, err := profile.CreateClient(context.Background())
-		if err != nil {
-			activeApp.SetError(err)
-			return
-		}
-
-		activeApp.SetS3Client(client, "")
-		activeApp.OpenPage(AttachClose{
-			PageContent: NewBucketsPage(client),
-			Closer: CloseFunc(func() {
-				activeApp.SetS3Client(nil, "")
-			}),
-		})
+		c.OpenPage(NewBucketsPage(c.WithClient(client)))
 	})
 
 	page.load()
@@ -84,27 +57,22 @@ func (b *ProfilePage) Title() string {
 	return "Profiles"
 }
 
+func (b *ProfilePage) Context() Context {
+	return b.context
+}
+
 func (b *ProfilePage) Hotkeys() map[tcell.EventKey]Hotkey {
 	return map[tcell.EventKey]Hotkey{}
 }
 
 func (b *ProfilePage) load() {
 	b.ListPage.ClearRows()
-	b.ListPage.AddRow(Row{
-		Header:  true,
-		Columns: []string{"Type", "Name"},
-	})
 
 	profiles, err := loadConnectors(b.loaders)
 	if err != nil {
-		activeApp.SetError(err)
+		b.context.SetError(err)
 		return
 	}
 
-	for _, p := range profiles {
-		b.ListPage.AddRow(Row{
-			Columns: []string{p.Type(), p.Name()},
-		})
-	}
-
+	b.ListPage.AddAll(profiles)
 }

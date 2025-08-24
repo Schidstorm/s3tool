@@ -16,8 +16,10 @@ func TestBucketsPage(t *testing.T) {
 		WithBucket("test-bucket", "eu-central-1", time.Date(2023, 10, 1, 11, 0, 0, 0, time.UTC)).
 		WithBucket("test-bucket-2", "eu-central-2", time.Date(2022, 10, 2, 12, 0, 0, 0, europeLocale)).
 		Build()
-	page := NewBucketsPage(client)
-	rows := getTableRows(page.ListPage.table)
+	page := NewBucketsPage(NewContext().WithClient(client).WithErrorFunc(func(err error) {
+		t.Error(err)
+	}))
+	rows := getTableRows(page.ListPage.tviewTable)
 
 	assert.EqualValues(t, [][]string{
 		{"Bucket Name", "Region", "Created At"},

@@ -2,7 +2,6 @@ package terminal
 
 import (
 	"github.com/rivo/tview"
-	"github.com/schidstorm/s3tool/pkg/s3lib"
 )
 
 type ProfileInfoBox struct {
@@ -30,14 +29,14 @@ func NewProfileInfoBox() *ProfileInfoBox {
 	return info
 }
 
-func (info *ProfileInfoBox) Update(client s3lib.Client, bucketName string) {
+func (info *ProfileInfoBox) UpdateContext(c Context) {
 	info.table.Clear()
 
-	if client == nil {
+	if c.S3Client() == nil {
 		return
 	}
 
-	infoItems := s3ClientToInfos(client, bucketName)
+	infoItems := s3ClientToInfos(c)
 	for row, infoItem := range infoItems {
 		info.table.SetCell(row, 0, tview.NewTableCell(infoItem.Title).SetStyle(DefaultTheme.ProfileKey))
 		info.table.SetCell(row, 1,
@@ -52,10 +51,10 @@ type s3ClientInfoItem struct {
 	Info  string
 }
 
-func s3ClientToInfos(client s3lib.Client, bucketName string) []s3ClientInfoItem {
+func s3ClientToInfos(c Context) []s3ClientInfoItem {
 	items := []s3ClientInfoItem{}
 
-	parameters := client.ConnectionParameters(bucketName)
+	parameters := c.S3Client().ConnectionParameters(c.Bucket())
 	if parameters.Endpoint != nil {
 		items = append(items, s3ClientInfoItem{
 			Title: "Endpoint:",

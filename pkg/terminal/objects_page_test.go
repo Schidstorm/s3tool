@@ -17,8 +17,10 @@ func TestObjectsPage(t *testing.T) {
 		WithObject("test-bucket", "file1.txt", 1024, time.Date(2023, 10, 1, 11, 0, 0, 0, time.UTC), "etag1", "STANDARD", []byte("content1")).
 		WithObject("test-bucket", "file2.txt", 2049, time.Date(2022, 10, 2, 12, 0, 0, 0, europeLocale), "etag2", "STANDARD", []byte("content2")).
 		Build()
-	page := NewObjectsPage(client, "test-bucket", "")
-	rows := getTableRows(page.ListPage.table)
+	page := NewObjectsPage(NewContext().WithErrorFunc(func(err error) {
+		t.Error(err)
+	}).WithClient(client).WithBucket("test-bucket"))
+	rows := getTableRows(page.ListPage.tviewTable)
 	assert.Equal(t, 3, len(rows))
 
 	assert.EqualValues(t, [][]string{

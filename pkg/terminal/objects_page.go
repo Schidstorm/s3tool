@@ -18,32 +18,40 @@ import (
 )
 
 type ObjectsPage struct {
-	*ListPage
+	*ListPage[s3lib.Object]
 
-	client     s3lib.Client
-	bucketName string
-	prefix     string
+	context Context
 }
 
-func NewObjectsPage(client s3lib.Client, bucketName, prefix string) *ObjectsPage {
-	listPage := NewListPage()
+func NewObjectsPage(context Context) *ObjectsPage {
+	listPage := NewListPage[s3lib.Object]()
+	listPage.AddColumn("Name", func(item s3lib.Object) string {
+		return strings.TrimPrefix(aws.ToString(item.Object.Key), context.ObjectKey())
+	})
+	listPage.AddColumn("Size", func(item s3lib.Object) string {
+		if item.IsDirectory() {
+			return ""
+		}
+		return humanizeSize(item.Object.Size)
+	})
+	listPage.AddColumn("Last Modified", func(item s3lib.Object) string {
+		if item.IsDirectory() {
+			return ""
+		}
+		return humanizeTime(item.Object.LastModified)
+	})
+
 	page := &ObjectsPage{
-		ListPage:   listPage,
-		client:     client,
-		bucketName: bucketName,
-		prefix:     prefix,
+		ListPage: listPage,
+		context:  context,
 	}
 
-	listPage.SetSelectedFunc(func(columns []string) {
-		if len(columns) < 1 {
-			return
-		}
-
-		p := columns[0]
+	listPage.SetSelectedFunc(func(selected s3lib.Object) {
+		p := strings.TrimPrefix(aws.ToString(selected.Object.Key), context.ObjectKey())
 		if strings.HasSuffix(p, "/") {
-			activeApp.OpenPage(NewObjectsPage(client, bucketName, prefix+p))
+			context.OpenPage(NewObjectsPage(context.WithObjectKey(aws.ToString(selected.Object.Key))))
 		} else {
-			activeApp.OpenPage(NewObjectPage(client, bucketName, prefix+p))
+			context.OpenPage(NewObjectPage(context.WithObjectKey(aws.ToString(selected.Object.Key))))
 		}
 	})
 
@@ -52,14 +60,14 @@ func NewObjectsPage(client s3lib.Client, bucketName, prefix string) *ObjectsPage
 	return page
 }
 
-func (b *ObjectsPage) Root() tview.Primitive {
-	return b
+func (b *ObjectsPage) Context() Context {
+	return b.context
 }
 
 func (b *ObjectsPage) Title() string {
-	title := "Objects in " + b.bucketName
-	if b.prefix != "" {
-		title += " - " + b.prefix
+	title := "Objects in " + b.context.Bucket()
+	if b.context.ObjectKey() != "" {
+		title += " - " + b.context.ObjectKey()
 	}
 
 	return title
@@ -67,29 +75,29 @@ func (b *ObjectsPage) Title() string {
 
 func (b *ObjectsPage) Hotkeys() map[tcell.EventKey]Hotkey {
 	return map[tcell.EventKey]Hotkey{
-		EventKey(tcell.KeyRune, 'n', 0): Hotkey{
+		EventKey(tcell.KeyRune, 'n', 0): {
 			Title:   "New Object",
 			Handler: func(event *tcell.EventKey) *tcell.EventKey { b.newObjectForm(); return nil },
 		},
-		EventKey(tcell.KeyRune, 'v', 0): Hotkey{
+		EventKey(tcell.KeyRune, 'v', 0): {
 			Title: "View Object",
 			Handler: func(event *tcell.EventKey) *tcell.EventKey {
-				if i, row := b.ListPage.GetSelectedRow(); i >= 0 {
-					err := viewObject(b.client, b.bucketName, b.prefix+row.Columns[0])
+				if obj, ok := b.ListPage.GetSelectedRow(); ok {
+					err := viewObject(b.context.WithObjectKey(aws.ToString(obj.Object.Key)))
 					if err != nil {
-						activeApp.SetError(err)
+						b.context.SetError(err)
 					}
 				}
 				return nil
 			},
 		},
-		EventKey(tcell.KeyRune, 'e', 0): Hotkey{
+		EventKey(tcell.KeyRune, 'e', 0): {
 			Title: "Edit Object",
 			Handler: func(event *tcell.EventKey) *tcell.EventKey {
-				if i, row := b.ListPage.GetSelectedRow(); i >= 0 {
-					err := editObject(b.client, b.bucketName, b.prefix+row.Columns[0])
+				if obj, ok := b.ListPage.GetSelectedRow(); ok {
+					err := editObject(b.context.WithObjectKey(aws.ToString(obj.Object.Key)))
 					if err != nil {
-						activeApp.SetError(err)
+						b.context.SetError(err)
 					}
 				}
 				return nil
@@ -100,46 +108,19 @@ func (b *ObjectsPage) Hotkeys() map[tcell.EventKey]Hotkey {
 
 func (b *ObjectsPage) load() {
 	b.ListPage.ClearRows()
-	b.ListPage.AddRow(Row{
-		Header:  true,
-		Columns: []string{"Name", "Size", "Last Modified"},
-	})
-
-	paginator := b.client.ListObjects(context.Background(), b.bucketName, b.prefix)
+	paginator := b.context.S3Client().ListObjects(context.Background(), b.context.Bucket(), b.context.ObjectKey())
 	var objects []s3lib.Object
 	for paginator.HasMorePages() {
 		page, err := paginator.NextPage(context.Background())
 		if err != nil {
-			activeApp.SetError(err)
+			b.context.SetError(err)
 			return
 		}
 
 		objects = append(objects, page...)
 	}
 
-	rows := make([]Row, len(objects))
-	for i, obj := range objects {
-		if obj.IsDirectory() {
-			rows[i] = Row{
-				Header: false,
-				Columns: []string{
-					strings.TrimPrefix(aws.ToString(obj.Object.Key), b.prefix),
-					"",
-					"",
-				},
-			}
-		} else {
-			rows[i] = Row{
-				Header: false,
-				Columns: []string{
-					strings.TrimPrefix(aws.ToString(obj.Object.Key), b.prefix),
-					humanizeSize(obj.Object.Size),
-					humanizeTime(obj.Object.LastModified),
-				},
-			}
-		}
-	}
-	b.ListPage.AddRows(rows)
+	b.ListPage.AddAll(objects)
 }
 
 func humanizeTime(t *time.Time) string {
@@ -165,20 +146,20 @@ func humanizeSize(sizep *int64) string {
 }
 
 func (b *ObjectsPage) newObjectForm() {
-	modalName := "newObject"
-	form := tview.NewForm()
-	form.AddInputField("Name", "", 20, nil, func(text string) {})
-	form.AddButton("Create", func() {
-		if err := b.createObject(form); err != nil {
-			activeApp.SetError(err)
-		}
-		activeApp.CloseModal(modalName)
-	})
-	form.AddButton("Cancel", func() {
-		activeApp.CloseModal(modalName)
-	})
-
-	activeApp.Modal(form, modalName, 40, 10)
+	b.context.Modal(func(close func()) tview.Primitive {
+		form := tview.NewForm()
+		form.AddInputField("Name", "", 20, nil, func(text string) {})
+		form.AddButton("Create", func() {
+			if err := b.createObject(form); err != nil {
+				b.context.SetError(err)
+			}
+			close()
+		})
+		form.AddButton("Cancel", func() {
+			close()
+		})
+		return form
+	}, "newObject", 40, 10)
 }
 
 func (b *ObjectsPage) createObject(form *tview.Form) error {
@@ -188,7 +169,7 @@ func (b *ObjectsPage) createObject(form *tview.Form) error {
 		return errors.New("object name cannot be empty")
 	}
 
-	name = b.prefix + name
+	name = b.context.ObjectKey() + name
 
 	tmpDir, err := os.MkdirTemp("", "s3tool")
 	if err != nil {
@@ -210,7 +191,7 @@ func (b *ObjectsPage) createObject(form *tview.Form) error {
 		return err
 	}
 
-	err = EditFile(tmpFilePath)
+	err = EditFile(b.context, tmpFilePath)
 	if err != nil {
 		return err
 	}
@@ -219,7 +200,7 @@ func (b *ObjectsPage) createObject(form *tview.Form) error {
 		return nil
 	}
 
-	err = b.client.UploadFile(context.Background(), b.bucketName, name, tmpFilePath)
+	err = b.context.S3Client().UploadFile(context.Background(), b.context.Bucket(), name, tmpFilePath)
 	if err != nil {
 		return err
 	}

@@ -39,6 +39,9 @@ func (c *MemoryClient) ListBuckets(ctx context.Context) Paginator[types.Bucket] 
 			BucketRegion: aws.String(c.buckets[name].region),
 		})
 	}
+	slices.SortFunc(bucketList, func(a, b types.Bucket) int {
+		return strings.Compare(aws.ToString(a.Name), aws.ToString(b.Name))
+	})
 	return &memoryPaginator[types.Bucket]{items: bucketList}
 }
 

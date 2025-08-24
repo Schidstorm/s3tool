@@ -5,7 +5,7 @@ import (
 	"github.com/schidstorm/s3tool/pkg/s3lib"
 )
 
-var activeApp *App
+// var activeApp *App
 
 type App struct {
 	*tview.Application
@@ -19,9 +19,9 @@ func NewApp(page PageContent, loaders ...s3lib.ConnectorLoader) *App {
 		Application: tview.NewApplication(),
 	}
 
-	activeApp = app
+	// activeApp = app
 	if page == nil {
-		page = NewProfilePage(loaders)
+		page = NewProfilePage(app.CreateContext(), loaders)
 	}
 
 	root.OpenPage(page)
@@ -29,16 +29,20 @@ func NewApp(page PageContent, loaders ...s3lib.ConnectorLoader) *App {
 	return app
 }
 
+func (a *App) CreateContext() Context {
+	return NewContext().
+		WithOpenPageFunc(a.OpenPage).
+		WithErrorFunc(a.SetError).
+		WithModalFunc(a.Modal).
+		WithSuspendAppFunc(a.Application.Suspend)
+}
+
 func (a *App) Run() error {
 	return a.Application.SetRoot(a.root, true).Run()
 }
 
-func (a *App) Modal(p tview.Primitive, name string, width, height int) {
+func (a *App) Modal(p ModalBuilder, name string, width, height int) {
 	a.root.Modal(p, name, width, height)
-}
-
-func (a *App) CloseModal(name string) {
-	a.root.CloseModal(name)
 }
 
 func (a *App) OpenPage(page PageContent) {
@@ -47,8 +51,4 @@ func (a *App) OpenPage(page PageContent) {
 
 func (a *App) SetError(err error) {
 	a.root.SetError(err)
-}
-
-func (a *App) SetS3Client(client s3lib.Client, bucketName string) {
-	a.root.SetS3Client(client, bucketName)
 }

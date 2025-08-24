@@ -30,7 +30,5 @@ func (c *AwsConnector) CreateClient(ctx context.Context) (Client, error) {
 		return nil, fmt.Errorf("failed to load AWS SDK config for profile %s: %w", c.name, err)
 	}
 
-	return SdkClient{
-		Client: s3.NewFromConfig(sdkConfig),
-	}, nil
+	return NewSdkClient(s3.NewFromConfig(sdkConfig)), nil
 }

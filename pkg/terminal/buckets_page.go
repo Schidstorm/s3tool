@@ -8,36 +8,27 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
-	"github.com/schidstorm/s3tool/pkg/s3lib"
 )
 
 type BucketsPage struct {
-	*ListPage
+	*ListPage[types.Bucket]
 
-	client s3lib.Client
+	context Context
 }
 
-func NewBucketsPage(client s3lib.Client) *BucketsPage {
-	listPage := NewListPage()
+func NewBucketsPage(context Context) *BucketsPage {
+	listPage := NewListPage[types.Bucket]()
+	listPage.AddColumn("Bucket Name", func(item types.Bucket) string { return aws.ToString(item.Name) })
+	listPage.AddColumn("Region", func(item types.Bucket) string { return aws.ToString(item.BucketRegion) })
+	listPage.AddColumn("Created At", func(item types.Bucket) string { return humanizeTime(item.CreationDate) })
 
 	box := &BucketsPage{
 		ListPage: listPage,
-		client:   client,
+		context:  context,
 	}
 
-	listPage.SetSelectedFunc(func(columns []string) {
-		if len(columns) < 1 {
-			return
-		}
-
-		bucketName := columns[0]
-		activeApp.SetS3Client(client, bucketName)
-		activeApp.OpenPage(AttachClose{
-			PageContent: NewObjectsPage(box.client, bucketName, ""),
-			Closer: CloseFunc(func() {
-				activeApp.SetS3Client(client, "")
-			}),
-		})
+	listPage.SetSelectedFunc(func(selected types.Bucket) {
+		context.OpenPage(NewObjectsPage(context.WithBucket(aws.ToString(selected.Name))))
 	})
 
 	box.load()
@@ -47,6 +38,10 @@ func NewBucketsPage(client s3lib.Client) *BucketsPage {
 
 func (b *BucketsPage) Title() string {
 	return "Buckets"
+}
+
+func (b *BucketsPage) Context() Context {
+	return b.context
 }
 
 func (b *BucketsPage) Hotkeys() map[tcell.EventKey]Hotkey {
@@ -60,50 +55,35 @@ func (b *BucketsPage) Hotkeys() map[tcell.EventKey]Hotkey {
 
 func (b *BucketsPage) load() {
 	b.ListPage.ClearRows()
-	b.ListPage.AddRow(Row{
-		Header:  true,
-		Columns: []string{"Bucket Name", "Region", "Created At"},
-	})
 
-	paginator := b.client.ListBuckets(context.Background())
+	paginator := b.context.S3Client().ListBuckets(context.Background())
 	var buckets []types.Bucket
 	for paginator.HasMorePages() {
 		page, err := paginator.NextPage(context.Background())
 		if err != nil {
-			activeApp.SetError(err)
+			b.context.SetError(err)
 			return
 		}
 		buckets = append(buckets, page...)
 	}
 
-	rows := make([]Row, len(buckets))
-	for i, bucket := range buckets {
-		rows[i] = Row{
-			Header: false,
-			Columns: []string{
-				aws.ToString(bucket.Name),
-				aws.ToString(bucket.BucketRegion),
-				humanizeTime(bucket.CreationDate),
-			},
-		}
-	}
-	b.ListPage.AddRows(rows)
+	b.ListPage.AddAll(buckets)
 }
 
 func (b *BucketsPage) newBucketForm() {
-	modalName := "newBucket"
-	form := tview.NewForm()
-	form.AddInputField("Name", "", 20, nil, func(text string) {})
-	form.AddInputField("Region", "", 20, nil, func(text string) {})
-	form.AddButton("Create", func() {
-		b.createBucket(form)
-		activeApp.CloseModal(modalName)
-	})
-	form.AddButton("Cancel", func() {
-		activeApp.CloseModal(modalName)
-	})
-
-	activeApp.Modal(form, modalName, 40, 10)
+	b.context.Modal(func(close func()) tview.Primitive {
+		form := tview.NewForm()
+		form.AddInputField("Name", "", 20, nil, func(text string) {})
+		form.AddInputField("Region", "", 20, nil, func(text string) {})
+		form.AddButton("Create", func() {
+			b.createBucket(form)
+			close()
+		})
+		form.AddButton("Cancel", func() {
+			close()
+		})
+		return form
+	}, "newBucket", 40, 10)
 
 }
 
@@ -112,13 +92,13 @@ func (b *BucketsPage) createBucket(form *tview.Form) {
 	region := form.GetFormItemByLabel("Region").(*tview.InputField).GetText()
 
 	if name == "" {
-		activeApp.SetError(errors.New("bucket name cannot be empty"))
+		b.context.SetError(errors.New("bucket name cannot be empty"))
 		return
 	}
 
-	err := b.client.CreateBucket(context.Background(), name, region)
+	err := b.context.S3Client().CreateBucket(context.Background(), name, region)
 	if err != nil {
-		activeApp.SetError(err)
+		b.context.SetError(err)
 		return
 	}
 	b.load()

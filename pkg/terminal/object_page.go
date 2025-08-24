@@ -8,20 +8,17 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
-	"github.com/schidstorm/s3tool/pkg/s3lib"
 )
 
 type ObjectPage struct {
 	*tview.Flex
 	table *tview.Table
 
-	client     s3lib.Client
-	bucketName string
-	key        string
+	context    Context
 	searchTerm string
 }
 
-func NewObjectPage(client s3lib.Client, bucketName, key string) *ObjectPage {
+func NewObjectPage(context Context) *ObjectPage {
 	table := tview.NewTable().SetSelectable(true, false)
 	table.SetFixed(1, 0)
 
@@ -30,11 +27,9 @@ func NewObjectPage(client s3lib.Client, bucketName, key string) *ObjectPage {
 	flex.AddItem(table, 0, 1, true)
 
 	page := &ObjectPage{
-		table:      table,
-		Flex:       flex,
-		client:     client,
-		bucketName: bucketName,
-		key:        key,
+		table:   table,
+		Flex:    flex,
+		context: context,
 	}
 
 	page.load()
@@ -44,16 +39,16 @@ func NewObjectPage(client s3lib.Client, bucketName, key string) *ObjectPage {
 		case tcell.KeyDelete:
 		case tcell.KeyRune:
 			if event.Rune() == 'v' {
-				err := viewObject(client, bucketName, page.key)
+				err := viewObject(context)
 				if err != nil {
-					activeApp.SetError(err)
+					context.SetError(err)
 				}
 				return nil
 			}
 			if event.Rune() == 'e' {
-				err := editObject(client, bucketName, page.key)
+				err := editObject(context)
 				if err != nil {
-					activeApp.SetError(err)
+					context.SetError(err)
 				}
 				return nil
 			}
@@ -71,14 +66,14 @@ func (b *ObjectPage) SetSearch(search string) {
 	b.load()
 }
 
-func (b *ObjectPage) Root() tview.Primitive {
-	return b
+func (b *ObjectPage) Context() Context {
+	return b.context
 }
 
 func (b *ObjectPage) Title() string {
-	title := "Objects in " + b.bucketName
-	if b.key != "" {
-		title += " - " + b.key
+	title := "Objects in " + b.context.Bucket()
+	if b.context.ObjectKey() != "" {
+		title += " - " + b.context.ObjectKey()
 	}
 
 	return title
@@ -89,9 +84,9 @@ func (b *ObjectPage) Hotkeys() map[tcell.EventKey]Hotkey {
 		EventKey(tcell.KeyRune, 'v', 0): {
 			Title: "View Object",
 			Handler: func(event *tcell.EventKey) *tcell.EventKey {
-				err := viewObject(b.client, b.bucketName, b.key)
+				err := viewObject(b.context)
 				if err != nil {
-					activeApp.SetError(err)
+					b.context.SetError(err)
 				}
 				return nil
 			},
@@ -99,9 +94,9 @@ func (b *ObjectPage) Hotkeys() map[tcell.EventKey]Hotkey {
 		EventKey(tcell.KeyRune, 'e', 0): {
 			Title: "Edit Object",
 			Handler: func(event *tcell.EventKey) *tcell.EventKey {
-				err := editObject(b.client, b.bucketName, b.key)
+				err := editObject(b.context)
 				if err != nil {
-					activeApp.SetError(err)
+					b.context.SetError(err)
 				}
 				return nil
 			},
@@ -117,9 +112,9 @@ type item struct {
 func (b *ObjectPage) load() {
 	b.table.Clear()
 
-	obj, err := b.client.GetObject(context.Background(), b.bucketName, b.key)
+	obj, err := b.context.S3Client().GetObject(context.Background(), b.context.Bucket(), b.context.ObjectKey())
 	if err != nil {
-		activeApp.SetError(err)
+		b.context.SetError(err)
 		return
 	}
 

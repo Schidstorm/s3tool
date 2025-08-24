@@ -18,7 +18,7 @@ func TestProfileInfoBoxPathStyle(t *testing.T) {
 	})
 
 	box := NewProfileInfoBox()
-	box.Update(s3lib.NewSdkClient(client), "test-bucket")
+	box.UpdateContext(NewContext().WithClient(s3lib.NewSdkClient(client)).WithBucket("test-bucket"))
 	rows := getTableRows(box.table)
 	assert.Equal(t, 2, len(rows))
 	assert.EqualValues(t, [][]string{
@@ -35,7 +35,7 @@ func TestProfileInfoBoxNoPathStyle(t *testing.T) {
 	})
 
 	box := NewProfileInfoBox()
-	box.Update(s3lib.NewSdkClient(client), "test-bucket")
+	box.UpdateContext(NewContext().WithClient(s3lib.NewSdkClient(client)).WithBucket("test-bucket"))
 	rows := getTableRows(box.table)
 	assert.Equal(t, 2, len(rows))
 	assert.EqualValues(t, [][]string{
@@ -52,7 +52,7 @@ func TestProfileInfoBoxNoPathStyleNoBucket(t *testing.T) {
 	})
 
 	box := NewProfileInfoBox()
-	box.Update(s3lib.NewSdkClient(client), "")
+	box.UpdateContext(NewContext().WithClient(s3lib.NewSdkClient(client)))
 	rows := getTableRows(box.table)
 	assert.Equal(t, 2, len(rows))
 	assert.EqualValues(t, [][]string{
@@ -63,7 +63,7 @@ func TestProfileInfoBoxNoPathStyleNoBucket(t *testing.T) {
 
 func TestProfileInfoBoxNoClient(t *testing.T) {
 	box := NewProfileInfoBox()
-	box.Update(nil, "")
+	box.UpdateContext(NewContext())
 	rows := getTableRows(box.table)
 	assert.Equal(t, 0, len(rows))
 }

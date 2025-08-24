@@ -21,31 +21,7 @@ type PageContent interface {
 	Title() string
 	Hotkeys() map[tcell.EventKey]Hotkey
 	SetSearch(term string)
-}
-
-type CloseFunc func()
-
-func (f CloseFunc) Close() {
-	f()
-}
-
-type AttachClose struct {
-	PageContent
-	Closer ClosePage
-}
-
-func (a AttachClose) Close() {
-	if closer, ok := a.PageContent.(ClosePage); ok {
-		closer.Close()
-	}
-
-	if a.Closer != nil {
-		a.Closer.Close()
-	}
-}
-
-type ClosePage interface {
-	Close()
+	Context() Context
 }
 
 type Page struct {
@@ -172,10 +148,6 @@ func (p *Page) SetCloseHandler(handler func()) {
 }
 
 func (p *Page) handleClose() {
-	if closer, ok := p.content.(ClosePage); ok {
-		closer.Close()
-	}
-
 	if p.closeHandler != nil {
 		p.closeHandler()
 	}

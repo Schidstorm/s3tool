@@ -6,12 +6,10 @@ import (
 	"errors"
 	"io"
 	"os"
-
-	"github.com/schidstorm/s3tool/pkg/s3lib"
 )
 
-func editObject(client s3lib.Client, bucketName, objectName string) error {
-	tmpFilePath, err := downloadFileToTmp(client, bucketName, objectName)
+func editObject(c Context) error {
+	tmpFilePath, err := downloadFileToTmp(c)
 	if err != nil {
 		return err
 	}
@@ -22,7 +20,7 @@ func editObject(client s3lib.Client, bucketName, objectName string) error {
 		return err
 	}
 
-	err = EditFile(tmpFilePath)
+	err = EditFile(c, tmpFilePath)
 	if err != nil {
 		return err
 	}
@@ -37,7 +35,7 @@ func editObject(client s3lib.Client, bucketName, objectName string) error {
 	}
 
 	if oldHash != newHash {
-		err = client.UploadFile(context.Background(), bucketName, objectName, tmpFilePath)
+		err = c.S3Client().UploadFile(context.Background(), c.Bucket(), c.ObjectKey(), tmpFilePath)
 		if err != nil {
 			return err
 		}
@@ -46,24 +44,24 @@ func editObject(client s3lib.Client, bucketName, objectName string) error {
 	return nil
 }
 
-func viewObject(client s3lib.Client, bucketName, objectName string) error {
-	tmpFilePath, err := downloadFileToTmp(client, bucketName, objectName)
+func viewObject(c Context) error {
+	tmpFilePath, err := downloadFileToTmp(c)
 	if err != nil {
 		return err
 	}
 	defer os.Remove(tmpFilePath)
 
-	return ShowFile(tmpFilePath)
+	return ShowFile(c, tmpFilePath)
 }
 
-func downloadFileToTmp(client s3lib.Client, bucketName, objectName string) (string, error) {
+func downloadFileToTmp(c Context) (string, error) {
 	tmpDir, err := os.MkdirTemp("", "s3tool")
 	if err != nil {
 		return "", err
 	}
-	tmpFilePath := tmpDir + "/" + objectName
+	tmpFilePath := tmpDir + "/" + c.ObjectKey()
 
-	err = client.DownloadFile(context.Background(), bucketName, objectName, tmpFilePath)
+	err = c.S3Client().DownloadFile(context.Background(), c.Bucket(), c.ObjectKey(), tmpFilePath)
 	if err != nil {
 		return "", err
 	}

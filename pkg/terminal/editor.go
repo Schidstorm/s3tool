@@ -1,7 +1,6 @@
 package terminal
 
 import (
-	"errors"
 	"os"
 	"os/exec"
 )
@@ -9,15 +8,16 @@ import (
 var editCommand = []string{"editor"}
 var viewCommand = []string{"less"}
 
-func EditFile(filePath string) error {
-	return openFile(filePath, false)
+func EditFile(c Context, filePath string) error {
+
+	return openFile(c, filePath, false)
 }
 
-func ShowFile(filePath string) error {
-	return openFile(filePath, true)
+func ShowFile(c Context, filePath string) error {
+	return openFile(c, filePath, true)
 }
 
-func openFile(filePath string, readonly bool) error {
+func openFile(c Context, filePath string, readonly bool) error {
 	args := []string{filePath}
 
 	var command []string
@@ -34,13 +34,8 @@ func openFile(filePath string, readonly bool) error {
 	cmd.Stdin = os.Stdin
 
 	var err error
-	wasSuspended := activeApp.Application.Suspend(func() {
+	c.SuspendApp(func() {
 		err = cmd.Run()
 	})
-
-	if !wasSuspended {
-		return errors.New("application was already suspended")
-	}
-
 	return err
 }
