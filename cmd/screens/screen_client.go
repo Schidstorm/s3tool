@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/schidstorm/s3tool/pkg/s3lib"
+	"github.com/schidstorm/s3tool/internal/s3lib"
 )
 
 var memoryBucketLargeObjectCount = 100

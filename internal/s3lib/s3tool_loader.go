@@ -4,7 +4,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/schidstorm/s3tool/pkg/cli"
+	"github.com/schidstorm/s3tool/internal/cli"
 	"gopkg.in/yaml.v3"
 )
 

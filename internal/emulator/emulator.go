@@ -10,8 +10,8 @@ import (
 	_ "embed"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/schidstorm/s3tool/pkg/s3lib"
-	"github.com/schidstorm/s3tool/pkg/terminal"
+	"github.com/schidstorm/s3tool/internal/s3lib"
+	"github.com/schidstorm/s3tool/internal/terminal"
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/gofont/gomono"
 	"golang.org/x/image/font/gofont/gomonobold"

@@ -6,7 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/rivo/tview"
-	"github.com/schidstorm/s3tool/pkg/s3lib"
+	"github.com/schidstorm/s3tool/internal/s3lib"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -3,7 +3,7 @@ package terminal
 import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
-	"github.com/schidstorm/s3tool/pkg/s3lib"
+	"github.com/schidstorm/s3tool/internal/s3lib"
 )
 
 type SimulatedApp struct {

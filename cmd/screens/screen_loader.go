@@ -1,6 +1,6 @@
 package main
 
-import "github.com/schidstorm/s3tool/pkg/s3lib"
+import "github.com/schidstorm/s3tool/internal/s3lib"
 
 type ScreenLoader struct {
 }

@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/schidstorm/s3tool/pkg/cli"
-	"github.com/schidstorm/s3tool/pkg/s3lib"
-	"github.com/schidstorm/s3tool/pkg/terminal"
+	"github.com/schidstorm/s3tool/internal/cli"
+	"github.com/schidstorm/s3tool/internal/s3lib"
+	"github.com/schidstorm/s3tool/internal/terminal"
 )
 
 func main() {

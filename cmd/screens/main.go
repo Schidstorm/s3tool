@@ -5,8 +5,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/schidstorm/s3tool/pkg/cli"
-	"github.com/schidstorm/s3tool/pkg/emulator"
+	"github.com/schidstorm/s3tool/internal/cli"
+	"github.com/schidstorm/s3tool/internal/emulator"
 )
 
 func init() {

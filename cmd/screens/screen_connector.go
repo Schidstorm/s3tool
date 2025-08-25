@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 
-	"github.com/schidstorm/s3tool/pkg/s3lib"
+	"github.com/schidstorm/s3tool/internal/s3lib"
 )
 
 type ScreenConnector struct {

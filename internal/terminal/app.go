@@ -2,7 +2,7 @@ package terminal
 
 import (
 	"github.com/rivo/tview"
-	"github.com/schidstorm/s3tool/pkg/s3lib"
+	"github.com/schidstorm/s3tool/internal/s3lib"
 )
 
 // var activeApp *App
