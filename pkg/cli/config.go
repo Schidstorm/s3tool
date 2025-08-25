@@ -1,9 +1,10 @@
 package cli
 
 import (
-	"flag"
 	"os"
 	"strings"
+
+	"github.com/spf13/cobra"
 )
 
 var Config = DefaultConfig()
@@ -31,15 +32,32 @@ func DefaultConfig() *S3ToolCliConfig {
 }
 
 func Parse(args []string) error {
+	cmd := cobra.Command{
+		Use:   "s3tool",
+		Short: "s3tool is a terminal based S3 client",
+	}
+
+	cmd.AddCommand(completionCmd())
+
+	flag := cmd.Flags()
+
 	var cfg S3ToolCliConfig
-	flag.StringVar(&cfg.ProfilesDirectory, "profiles", Config.ProfilesDirectory, "Path to a directory containing profile yaml files")
+	flag.StringVarP(&cfg.ProfilesDirectory, "profiles", "p", Config.ProfilesDirectory, "Path to a directory containing profile yaml files")
 	flag.BoolVar(&cfg.Loaders.Aws, "loaders.aws", Config.Loaders.Aws, "Enable AWS loader")
 	flag.BoolVar(&cfg.Loaders.S3Tool, "loaders.s3tool", Config.Loaders.S3Tool, "Enable S3Tool loader")
 	flag.BoolVar(&cfg.Loaders.Memory, "loaders.memory", Config.Loaders.Memory, "Enable Memory loader (for testing purposes)")
+	flag.MarkHidden("loaders.memory")
 
-	err := flag.CommandLine.Parse(args)
-	if err != nil {
+	showHelp := flag.Bool("help", false, "Show help")
+
+	cmd.SetArgs(args)
+	if err := cmd.Execute(); err != nil {
 		return err
+	}
+
+	if *showHelp {
+		cmd.Help()
+		os.Exit(0)
 	}
 
 	cfg = cleanup(cfg)
@@ -59,4 +77,35 @@ func cleanup(cfg S3ToolCliConfig) S3ToolCliConfig {
 	}
 
 	return result
+}
+
+func completionCmd() *cobra.Command {
+	completionCmd := cobra.Command{
+		Use:   "completion",
+		Short: "Generate completion script",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			shell, err := cmd.Flags().GetString("shell")
+			if err != nil {
+				return err
+			}
+
+			var err2 error
+			switch strings.ToLower(shell) {
+			case "bash":
+				err2 = cmd.Root().GenBashCompletion(os.Stdout)
+			case "zsh":
+				err2 = cmd.Root().GenZshCompletion(os.Stdout)
+			case "fish":
+				err2 = cmd.Root().GenFishCompletion(os.Stdout, true)
+			case "powershell":
+				err2 = cmd.Root().GenPowerShellCompletionWithDesc(os.Stdout)
+			default:
+				return nil
+			}
+			return err2
+		},
+	}
+	completionFlags := completionCmd.Flags()
+	completionFlags.StringP("shell", "s", "bash", "Shell type (bash|zsh|fish|powershell)")
+	return &completionCmd
 }
