@@ -32,32 +32,22 @@ func DefaultConfig() *S3ToolCliConfig {
 }
 
 func Parse(args []string) error {
-	cmd := cobra.Command{
-		Use:   "s3tool",
-		Short: "s3tool is a terminal based S3 client",
-	}
-
-	cmd.AddCommand(completionCmd())
-
-	flag := cmd.Flags()
-
 	var cfg S3ToolCliConfig
-	flag.StringVarP(&cfg.ProfilesDirectory, "profiles", "p", Config.ProfilesDirectory, "Path to a directory containing profile yaml files")
-	flag.BoolVar(&cfg.Loaders.Aws, "loaders.aws", Config.Loaders.Aws, "Enable AWS loader")
-	flag.BoolVar(&cfg.Loaders.S3Tool, "loaders.s3tool", Config.Loaders.S3Tool, "Enable S3Tool loader")
-	flag.BoolVar(&cfg.Loaders.Memory, "loaders.memory", Config.Loaders.Memory, "Enable Memory loader (for testing purposes)")
-	flag.MarkHidden("loaders.memory")
-
-	showHelp := flag.Bool("help", false, "Show help")
+	cmd := rootCmd(&cfg)
+	cmd.AddCommand(completionCmd())
 
 	cmd.SetArgs(args)
 	if err := cmd.Execute(); err != nil {
 		return err
 	}
 
-	if *showHelp {
-		cmd.Help()
+	runRoot := false
+	cmd.Run = func(cmd *cobra.Command, args []string) {
+		runRoot = true
+	}
+	if !runRoot {
 		os.Exit(0)
+		return nil
 	}
 
 	cfg = cleanup(cfg)
@@ -79,8 +69,24 @@ func cleanup(cfg S3ToolCliConfig) S3ToolCliConfig {
 	return result
 }
 
+func rootCmd(cfg *S3ToolCliConfig) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "s3tool",
+		Short: "s3tool is a terminal based S3 client",
+	}
+
+	flag := cmd.Flags()
+	flag.StringVarP(&cfg.ProfilesDirectory, "profiles", "p", Config.ProfilesDirectory, "Path to a directory containing profile yaml files")
+	flag.BoolVar(&cfg.Loaders.Aws, "loaders.aws", Config.Loaders.Aws, "Enable AWS loader")
+	flag.BoolVar(&cfg.Loaders.S3Tool, "loaders.s3tool", Config.Loaders.S3Tool, "Enable S3Tool loader")
+	flag.BoolVar(&cfg.Loaders.Memory, "loaders.memory", Config.Loaders.Memory, "Enable Memory loader (for testing purposes)")
+	flag.MarkHidden("loaders.memory")
+
+	return cmd
+}
+
 func completionCmd() *cobra.Command {
-	completionCmd := cobra.Command{
+	completionCmd := &cobra.Command{
 		Use:   "completion",
 		Short: "Generate completion script",
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -102,10 +108,11 @@ func completionCmd() *cobra.Command {
 			default:
 				return nil
 			}
+
 			return err2
 		},
 	}
 	completionFlags := completionCmd.Flags()
 	completionFlags.StringP("shell", "s", "bash", "Shell type (bash|zsh|fish|powershell)")
-	return &completionCmd
+	return completionCmd
 }
