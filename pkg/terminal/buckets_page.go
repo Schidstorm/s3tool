@@ -46,9 +46,23 @@ func (b *BucketsPage) Context() Context {
 
 func (b *BucketsPage) Hotkeys() map[tcell.EventKey]Hotkey {
 	return map[tcell.EventKey]Hotkey{
-		EventKey(tcell.KeyRune, 'n', 0): Hotkey{
+		EventKey(tcell.KeyRune, 'n', 0): {
 			Title:   "New Bucket",
 			Handler: func(event *tcell.EventKey) *tcell.EventKey { b.newBucketForm(); return nil },
+		},
+		EventKey(tcell.KeyRune, 'd', 0): {
+			Title: "Delete Bucket",
+			Handler: func(event *tcell.EventKey) *tcell.EventKey {
+				if selected, ok := b.GetSelectedRow(); ok {
+					err := b.context.S3Client().DeleteBucket(context.Background(), aws.ToString(selected.Name))
+					if err != nil {
+						b.context.SetError(err)
+					}
+					b.load()
+				}
+
+				return nil
+			},
 		},
 	}
 }

@@ -14,4 +14,6 @@ type Client interface {
 	UploadFile(ctx context.Context, bucket, key, filePath string) error
 	DownloadFile(ctx context.Context, bucket, key, filePath string) error
 	GetObject(ctx context.Context, bucket, key string) (ObjectMetadata, error)
+	DeleteBucket(ctx context.Context, bucket string) error
+	DeleteObject(ctx context.Context, bucket, key string) error
 }

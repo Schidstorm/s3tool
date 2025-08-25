@@ -190,6 +190,21 @@ func (c SdkClient) GetObject(ctx context.Context, bucket, key string) (ObjectMet
 	return result, err
 }
 
+func (c SdkClient) DeleteBucket(ctx context.Context, bucket string) error {
+	_, err := c.Client.DeleteBucket(ctx, &s3.DeleteBucketInput{
+		Bucket: aws.String(bucket),
+	})
+	return err
+}
+
+func (c SdkClient) DeleteObject(ctx context.Context, bucket, key string) error {
+	_, err := c.Client.DeleteObject(ctx, &s3.DeleteObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(key),
+	})
+	return err
+}
+
 func ErrorText(err error) string {
 	if err == nil {
 		return ""

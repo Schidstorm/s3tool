@@ -103,6 +103,24 @@ func (b *ObjectsPage) Hotkeys() map[tcell.EventKey]Hotkey {
 				return nil
 			},
 		},
+		EventKey(tcell.KeyRune, 'd', 0): {
+			Title: "Delete Object",
+			Handler: func(event *tcell.EventKey) *tcell.EventKey {
+				if selected, ok := b.GetSelectedRow(); ok {
+					err := b.context.S3Client().DeleteObject(
+						context.Background(),
+						b.context.Bucket(),
+						aws.ToString(selected.Object.Key),
+					)
+					if err != nil {
+						b.context.SetError(err)
+					}
+					b.load()
+				}
+
+				return nil
+			},
+		},
 	}
 }
 

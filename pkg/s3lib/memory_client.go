@@ -149,3 +149,24 @@ func (c *MemoryClient) GetObject(ctx context.Context, bucket, key string) (Objec
 	}
 	return ObjectMetadata{}, errors.New("bucket not found")
 }
+
+func (c *MemoryClient) DeleteBucket(ctx context.Context, bucket string) error {
+	if _, exists := c.buckets[bucket]; exists {
+		delete(c.buckets, bucket)
+		return nil
+	}
+	return errors.New("bucket not found")
+}
+
+func (c *MemoryClient) DeleteObject(ctx context.Context, bucket, key string) error {
+	if memBucket, exists := c.buckets[bucket]; exists {
+		for i, obj := range memBucket.objects {
+			if obj.key == key {
+				memBucket.objects = append(memBucket.objects[:i], memBucket.objects[i+1:]...)
+				return nil
+			}
+		}
+		return errors.New("object not found")
+	}
+	return errors.New("bucket not found")
+}
