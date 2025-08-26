@@ -41,8 +41,8 @@ func (a *App) Run() error {
 	return a.Application.SetRoot(a.root, true).Run()
 }
 
-func (a *App) Modal(p ModalBuilder, name string, width, height int) {
-	a.root.Modal(p, name, width, height)
+func (a *App) Modal(p ModalBuilder, width, height int) {
+	a.root.Modal(p, width, height)
 }
 
 func (a *App) OpenPage(page PageContent) {

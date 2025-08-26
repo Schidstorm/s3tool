@@ -34,8 +34,6 @@ func NewProfilePage(c Context, loaders []s3lib.ConnectorLoader) *ProfilePage {
 		c.OpenPage(NewBucketsPage(c.WithClient(client)))
 	})
 
-	page.load()
-
 	return page
 }
 
@@ -65,14 +63,14 @@ func (b *ProfilePage) Hotkeys() map[tcell.EventKey]Hotkey {
 	return map[tcell.EventKey]Hotkey{}
 }
 
-func (b *ProfilePage) load() {
+func (b *ProfilePage) Load() error {
 	b.ListPage.ClearRows()
 
 	profiles, err := loadConnectors(b.loaders)
 	if err != nil {
-		b.context.SetError(err)
-		return
+		return err
 	}
 
 	b.ListPage.AddAll(profiles)
+	return nil
 }

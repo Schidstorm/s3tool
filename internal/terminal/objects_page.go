@@ -55,8 +55,6 @@ func NewObjectsPage(context Context) *ObjectsPage {
 		}
 	})
 
-	page.load()
-
 	return page
 }
 
@@ -115,7 +113,10 @@ func (b *ObjectsPage) Hotkeys() map[tcell.EventKey]Hotkey {
 					if err != nil {
 						b.context.SetError(err)
 					}
-					b.load()
+					err = b.Load()
+					if err != nil {
+						b.context.SetError(err)
+					}
 				}
 
 				return nil
@@ -124,21 +125,21 @@ func (b *ObjectsPage) Hotkeys() map[tcell.EventKey]Hotkey {
 	}
 }
 
-func (b *ObjectsPage) load() {
+func (b *ObjectsPage) Load() error {
 	b.ListPage.ClearRows()
 	paginator := b.context.S3Client().ListObjects(context.Background(), b.context.Bucket(), b.context.ObjectKey())
 	var objects []s3lib.Object
 	for paginator.HasMorePages() {
 		page, err := paginator.NextPage(context.Background())
 		if err != nil {
-			b.context.SetError(err)
-			return
+			return err
 		}
 
 		objects = append(objects, page...)
 	}
 
 	b.ListPage.AddAll(objects)
+	return nil
 }
 
 func humanizeTime(t *time.Time) string {
@@ -177,7 +178,7 @@ func (b *ObjectsPage) newObjectForm() {
 			close()
 		})
 		return form
-	}, "newObject", 40, 10)
+	}, 40, 10)
 }
 
 func (b *ObjectsPage) createObject(form *tview.Form) error {
@@ -223,7 +224,5 @@ func (b *ObjectsPage) createObject(form *tview.Form) error {
 		return err
 	}
 
-	b.load()
-
-	return nil
+	return b.Load()
 }

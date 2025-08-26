@@ -31,8 +31,6 @@ func NewBucketsPage(context Context) *BucketsPage {
 		context.OpenPage(NewObjectsPage(context.WithBucket(aws.ToString(selected.Name))))
 	})
 
-	box.load()
-
 	return box
 }
 
@@ -58,7 +56,10 @@ func (b *BucketsPage) Hotkeys() map[tcell.EventKey]Hotkey {
 					if err != nil {
 						b.context.SetError(err)
 					}
-					b.load()
+					err = b.Load()
+					if err != nil {
+						b.context.SetError(err)
+					}
 				}
 
 				return nil
@@ -67,7 +68,7 @@ func (b *BucketsPage) Hotkeys() map[tcell.EventKey]Hotkey {
 	}
 }
 
-func (b *BucketsPage) load() {
+func (b *BucketsPage) Load() error {
 	b.ListPage.ClearRows()
 
 	paginator := b.context.S3Client().ListBuckets(context.Background())
@@ -75,13 +76,13 @@ func (b *BucketsPage) load() {
 	for paginator.HasMorePages() {
 		page, err := paginator.NextPage(context.Background())
 		if err != nil {
-			b.context.SetError(err)
-			return
+			return err
 		}
 		buckets = append(buckets, page...)
 	}
 
 	b.ListPage.AddAll(buckets)
+	return nil
 }
 
 func (b *BucketsPage) newBucketForm() {
@@ -97,7 +98,7 @@ func (b *BucketsPage) newBucketForm() {
 			close()
 		})
 		return form
-	}, "newBucket", 40, 10)
+	}, 40, 10)
 
 }
 
@@ -115,6 +116,11 @@ func (b *BucketsPage) createBucket(form *tview.Form) {
 		b.context.SetError(err)
 		return
 	}
-	b.load()
+
+	err = b.Load()
+	if err != nil {
+		b.context.SetError(err)
+		return
+	}
 
 }

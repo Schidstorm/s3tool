@@ -46,14 +46,15 @@ func NewObjectPage(context Context) *ObjectPage {
 		return event
 	})
 
-	page.load()
-
 	return page
 }
 
 func (b *ObjectPage) SetSearch(search string) {
 	b.searchTerm = search
-	b.load()
+	err := b.Load()
+	if err != nil {
+		b.context.SetError(err)
+	}
 }
 
 func (b *ObjectPage) Context() Context {
@@ -99,12 +100,11 @@ type item struct {
 	value []string
 }
 
-func (b *ObjectPage) load() {
+func (b *ObjectPage) Load() error {
 
 	obj, err := b.context.S3Client().GetObject(context.Background(), b.context.Bucket(), b.context.ObjectKey())
 	if err != nil {
-		b.context.SetError(err)
-		return
+		return err
 	}
 
 	var items []item
@@ -151,4 +151,6 @@ func (b *ObjectPage) load() {
 			SetAlign(tview.AlignLeft))
 		rowIndex++
 	}
+
+	return nil
 }

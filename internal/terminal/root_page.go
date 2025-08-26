@@ -1,9 +1,15 @@
 package terminal
 
 import (
+	"errors"
+	"strconv"
+	"time"
+
+	"github.com/aws/aws-sdk-go-v2/aws/transport/http"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+	"github.com/aws/smithy-go"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
-	"github.com/schidstorm/s3tool/internal/s3lib"
 )
 
 type RootPage struct {
@@ -12,9 +18,8 @@ type RootPage struct {
 	profileInfo *ProfileInfoBox
 	hotkeyInfo  *HotkeyInfoBox
 
-	pageStask  []*Page
-	modalOpen  string
-	statusText *tview.TextView
+	pageStask      []*Page
+	openModalNames []string
 }
 
 func NewRootPage() *RootPage {
@@ -31,32 +36,25 @@ func NewRootPage() *RootPage {
 	content := tview.NewPages()
 	content.SetBorder(true)
 	content.SetBorderStyle(DefaultTheme.PageBorder)
-	content.SetBorderPadding(0, 1, 1, 1)
-
-	statusText := tview.NewTextView().SetTextAlign(tview.AlignCenter)
+	content.SetBorderPadding(0, 0, 1, 1)
 
 	flex := tview.NewFlex()
 	flex.SetDirection(tview.FlexRow)
-	flex.AddItem(header, 8, 1, false)
+	flex.AddItem(header, 5, 1, false)
 	flex.AddItem(content, 0, 1, true)
-	flex.AddItem(statusText, 1, 1, false)
 
 	a := &RootPage{
 		profileInfo: profileInfo,
 		hotkeyInfo:  hotkeyInfo,
 		pages:       content,
 		Flex:        flex,
-		statusText:  statusText,
 	}
 
 	flex.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Key() {
 		case tcell.KeyEscape:
-			if a.modalOpen != "" {
-				a.CloseModal(a.modalOpen)
-				return nil
-			} else if a.statusText.GetText(true) != "" {
-				a.statusText.SetText("")
+			if len(a.openModalNames) > 0 {
+				a.closeModal(a.openModalNames[len(a.openModalNames)-1])
 				return nil
 			}
 		}
@@ -66,9 +64,12 @@ func NewRootPage() *RootPage {
 	return a
 }
 
-func (a *RootPage) Modal(p ModalBuilder, name string, width, height int) {
+func (a *RootPage) Modal(p ModalBuilder, width, height int) {
+	name := "modal_" + strconv.FormatInt(time.Now().UnixNano(), 16)
+	a.openModalNames = append(a.openModalNames, name)
+
 	content := p(func() {
-		a.CloseModal(name)
+		a.closeModal(name)
 	})
 	modal := tview.NewFlex().
 		AddItem(nil, 0, 1, false).
@@ -79,13 +80,23 @@ func (a *RootPage) Modal(p ModalBuilder, name string, width, height int) {
 		AddItem(nil, 0, 1, false)
 
 	a.pages.AddPage(name, modal, true, true)
-	a.modalOpen = name
 }
 
-func (a *RootPage) CloseModal(name string) {
+func (a *RootPage) closeModal(name string) {
+	var topModalIndex int = -1
+	for i := len(a.openModalNames) - 1; i >= 0; i-- {
+		if a.openModalNames[i] == name {
+			topModalIndex = i
+			break
+		}
+	}
+	if topModalIndex == -1 {
+		return
+	}
+
 	if a.pages.HasPage(name) {
 		a.pages.RemovePage(name)
-		a.modalOpen = ""
+		a.openModalNames = append(a.openModalNames[:topModalIndex], a.openModalNames[topModalIndex+1:]...)
 	}
 }
 
@@ -105,9 +116,14 @@ func (a *RootPage) OpenPage(pageContent PageContent) {
 func (a *RootPage) openPage(page *Page) {
 	a.pages.AddPage(page.Title(), page, true, true)
 	a.pages.SetTitle(" " + page.Title() + " ")
-	titleFg, _, _ := DefaultTheme.PageTitlePrimary.Decompose()
-	a.pages.SetTitleColor(titleFg)
+	a.pages.SetTitleColor(DefaultTheme.PageTitlePrimary)
 	a.pages.SwitchToPage(page.Title())
+
+	err := page.content.Load()
+	if err != nil {
+		a.SetError(err)
+	}
+
 	a.hotkeyInfo.Update(page.content)
 	a.profileInfo.UpdateContext(page.content.Context())
 }
@@ -123,11 +139,105 @@ func (a *RootPage) closePage() {
 }
 
 func (a *RootPage) SetError(err error) {
-	errorText := s3lib.ErrorText(err)
-	a.statusText.SetText("Error: " + errorText)
-	a.statusText.SetTextColor(tcell.ColorRed)
+	a.Modal(func(close func()) tview.Primitive {
+		textView := tview.NewTextView()
+		textView.SetTextAlign(tview.AlignCenter)
+		textView.SetBorder(true)
+		textView.SetBorderStyle(DefaultTheme.ErrorBorder)
+		textView.SetTitleColor(DefaultTheme.ErrorTitle)
+		textView.SetTitleAlign(tview.AlignLeft)
+		textView.SetTextStyle(DefaultTheme.ErrorMessage)
+		textView.SetBorderPadding(0, 0, 1, 1)
+
+		title, message := errorText(err)
+		textView.SetTitle(" Error: " + title + " ")
+		textView.SetText(message)
+		return textView
+	}, 60, 10)
 }
 
 func (a *RootPage) UpdateContext(c Context) {
 	a.profileInfo.UpdateContext(c)
+}
+
+func errorText(err error) (title, message string) {
+	if err == nil {
+		return "", ""
+	}
+
+	if smithyErr, ok := findError[*smithy.OperationError](err); ok {
+		if err, ok := findError[*http.ResponseError](err); ok {
+			return "Http Error", err.Err.Error()
+		}
+		if err, ok := findError[*smithy.GenericAPIError](err); ok {
+			return err.Code, err.Message
+		}
+		if err, ok := findError[*types.BucketAlreadyExists](err); ok {
+			return smithyErr.Operation(), err.Error()
+		}
+		if err, ok := findError[*types.BucketAlreadyOwnedByYou](err); ok {
+			return smithyErr.Operation(), err.Error()
+		}
+		if err, ok := findError[*types.EncryptionTypeMismatch](err); ok {
+			return smithyErr.Operation(), err.Error()
+		}
+		if err, ok := findError[*types.IdempotencyParameterMismatch](err); ok {
+			return smithyErr.Operation(), err.Error()
+		}
+		if err, ok := findError[*types.InvalidObjectState](err); ok {
+			return smithyErr.Operation(), err.Error()
+		}
+		if err, ok := findError[*types.InvalidRequest](err); ok {
+			return smithyErr.Operation(), err.Error()
+		}
+		if err, ok := findError[*types.InvalidWriteOffset](err); ok {
+			return smithyErr.Operation(), err.Error()
+		}
+		if err, ok := findError[*types.NoSuchBucket](err); ok {
+			return smithyErr.Operation(), err.Error()
+		}
+		if err, ok := findError[*types.NoSuchKey](err); ok {
+			return smithyErr.Operation(), err.Error()
+		}
+		if err, ok := findError[*types.NoSuchUpload](err); ok {
+			return smithyErr.Operation(), err.Error()
+		}
+		if err, ok := findError[*types.NotFound](err); ok {
+			return smithyErr.Operation(), err.Error()
+		}
+		if err, ok := findError[*types.ObjectAlreadyInActiveTierError](err); ok {
+			return smithyErr.Operation(), err.Error()
+		}
+		if err, ok := findError[*types.ObjectNotInActiveTierError](err); ok {
+			return smithyErr.Operation(), err.Error()
+		}
+		if err, ok := findError[*types.TooManyParts](err); ok {
+			return smithyErr.Operation(), err.Error()
+		}
+
+		return smithyErr.Operation(), smithyErr.Error()
+	}
+
+	return "Unknown Error", err.Error()
+}
+
+func findError[T any](e error) (T, bool) {
+	var errorList []error
+	currentErr := e
+	for {
+		if currentErr == nil {
+			break
+		}
+		errorList = append(errorList, currentErr)
+		currentErr = errors.Unwrap(currentErr)
+	}
+
+	for _, err := range errorList {
+		if e, ok := err.(T); ok {
+			return e, true
+		}
+	}
+
+	var zero T
+	return zero, false
 }

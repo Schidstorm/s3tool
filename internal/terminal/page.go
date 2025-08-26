@@ -22,6 +22,7 @@ type PageContent interface {
 	Hotkeys() map[tcell.EventKey]Hotkey
 	SetSearch(term string)
 	Context() Context
+	Load() error
 }
 
 type Page struct {

@@ -11,7 +11,7 @@ type Context interface {
 	S3Client() s3lib.Client
 	Bucket() string
 	ObjectKey() string
-	Modal(build ModalBuilder, name string, width, height int)
+	Modal(build ModalBuilder, width, height int)
 	SetError(err error)
 	OpenPage(page PageContent)
 	SuspendApp(f func()) bool
@@ -19,7 +19,7 @@ type Context interface {
 	WithClient(client s3lib.Client) Context
 	WithBucket(bucket string) Context
 	WithObjectKey(key string) Context
-	WithModalFunc(f func(build ModalBuilder, name string, width, height int)) Context
+	WithModalFunc(f func(build ModalBuilder, width, height int)) Context
 	WithErrorFunc(f func(err error)) Context
 	WithOpenPageFunc(f func(page PageContent)) Context
 	WithSuspendAppFunc(f func(func()) bool) Context
@@ -29,7 +29,7 @@ type contextImpl struct {
 	client     s3lib.Client
 	bucket     string
 	objectKey  string
-	modalFunc  func(build ModalBuilder, name string, width, height int)
+	modalFunc  func(build ModalBuilder, width, height int)
 	errorFunc  func(err error)
 	openFunc   func(page PageContent)
 	suspendApp func(func()) bool
@@ -51,9 +51,9 @@ func (c contextImpl) ObjectKey() string {
 	return c.objectKey
 }
 
-func (c contextImpl) Modal(build ModalBuilder, name string, width, height int) {
+func (c contextImpl) Modal(build ModalBuilder, width, height int) {
 	if c.modalFunc != nil {
-		c.modalFunc(build, name, width, height)
+		c.modalFunc(build, width, height)
 	}
 }
 
@@ -91,7 +91,7 @@ func (c contextImpl) WithObjectKey(key string) Context {
 	return c
 }
 
-func (c contextImpl) WithModalFunc(f func(build ModalBuilder, name string, width, height int)) Context {
+func (c contextImpl) WithModalFunc(f func(build ModalBuilder, width, height int)) Context {
 	c.modalFunc = f
 	return c
 }

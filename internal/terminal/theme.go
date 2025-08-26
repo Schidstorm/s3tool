@@ -11,8 +11,11 @@ type Theme struct {
 	PageBorder         tcell.Style
 	ProfileKey         tcell.Style
 	ProfileValue       tcell.Style
-	PageTitlePrimary   tcell.Style
-	PageTitleSecondary tcell.Style
+	PageTitlePrimary   tcell.Color
+	PageTitleSecondary tcell.Color
+	ErrorBorder        tcell.Style
+	ErrorTitle         tcell.Color
+	ErrorMessage       tcell.Style
 }
 
 var DefaultTheme = Theme{
@@ -24,6 +27,9 @@ var DefaultTheme = Theme{
 	PageBorder:         tcell.StyleDefault.Foreground(tcell.ColorNavy),
 	ProfileKey:         tcell.StyleDefault.Foreground(tcell.ColorOrange),
 	ProfileValue:       tcell.StyleDefault.Foreground(tcell.ColorWhite).Bold(true),
-	PageTitlePrimary:   tcell.StyleDefault.Foreground(tcell.ColorLightBlue),
-	PageTitleSecondary: tcell.StyleDefault.Foreground(tcell.ColorGray),
+	PageTitlePrimary:   tcell.ColorLightBlue,
+	PageTitleSecondary: tcell.ColorGray,
+	ErrorBorder:        tcell.StyleDefault.Foreground(tcell.ColorDarkGray),
+	ErrorTitle:         tcell.ColorLightBlue,
+	ErrorMessage:       tcell.StyleDefault.Foreground(tcell.ColorRed),
 }

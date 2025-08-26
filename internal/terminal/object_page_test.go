@@ -20,6 +20,7 @@ func TestObjectPage(t *testing.T) {
 	page := NewObjectPage(NewContext().WithClient(client).WithErrorFunc(func(err error) {
 		t.Error(err)
 	}).WithBucket("test-bucket").WithObjectKey("file1.txt"))
+	page.Load()
 	rows := getTableRows(page.Table)
 
 	assert.EqualValues(t, [][]string{

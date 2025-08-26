@@ -3,17 +3,14 @@ package s3lib
 import (
 	"context"
 	"errors"
-	"fmt"
 	"io"
 	"log"
-	"net"
 	"os"
 	"path"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
-	"github.com/aws/smithy-go"
 )
 
 type SdkClient struct {
@@ -203,91 +200,4 @@ func (c SdkClient) DeleteObject(ctx context.Context, bucket, key string) error {
 		Key:    aws.String(key),
 	})
 	return err
-}
-
-func ErrorText(err error) string {
-	if err == nil {
-		return ""
-	}
-
-	if smithyErr, ok := findError[*smithy.OperationError](err); ok {
-		reason := ""
-		if err, ok := findError[*net.OpError](err); ok {
-			return err.Error()
-		}
-		if err, ok := findError[*smithy.GenericAPIError](err); ok {
-			reason = err.ErrorMessage()
-		}
-		if err, ok := findError[*types.BucketAlreadyExists](err); ok {
-			reason = err.Error()
-		}
-		if err, ok := findError[*types.BucketAlreadyOwnedByYou](err); ok {
-			reason = err.Error()
-		}
-		if err, ok := findError[*types.EncryptionTypeMismatch](err); ok {
-			reason = err.Error()
-		}
-		if err, ok := findError[*types.IdempotencyParameterMismatch](err); ok {
-			reason = err.Error()
-		}
-		if err, ok := findError[*types.InvalidObjectState](err); ok {
-			reason = err.Error()
-		}
-		if err, ok := findError[*types.InvalidRequest](err); ok {
-			reason = err.Error()
-		}
-		if err, ok := findError[*types.InvalidWriteOffset](err); ok {
-			reason = err.Error()
-		}
-		if err, ok := findError[*types.NoSuchBucket](err); ok {
-			reason = err.Error()
-		}
-		if err, ok := findError[*types.NoSuchKey](err); ok {
-			reason = err.Error()
-		}
-		if err, ok := findError[*types.NoSuchUpload](err); ok {
-			reason = err.Error()
-		}
-		if err, ok := findError[*types.NotFound](err); ok {
-			reason = err.Error()
-		}
-		if err, ok := findError[*types.ObjectAlreadyInActiveTierError](err); ok {
-			reason = err.Error()
-		}
-		if err, ok := findError[*types.ObjectNotInActiveTierError](err); ok {
-			reason = err.Error()
-		}
-		if err, ok := findError[*types.TooManyParts](err); ok {
-			reason = err.Error()
-		}
-
-		if reason == "" {
-			reason = smithyErr.Error()
-		}
-
-		return fmt.Sprintf("%s - %s", smithyErr.Operation(), reason)
-	}
-
-	return err.Error()
-}
-
-func findError[T any](e error) (T, bool) {
-	var errorList []error
-	currentErr := e
-	for {
-		if currentErr == nil {
-			break
-		}
-		errorList = append(errorList, currentErr)
-		currentErr = errors.Unwrap(currentErr)
-	}
-
-	for _, err := range errorList {
-		if e, ok := err.(T); ok {
-			return e, true
-		}
-	}
-
-	var zero T
-	return zero, false
 }
