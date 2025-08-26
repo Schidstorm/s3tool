@@ -34,6 +34,11 @@ func DefaultConfig() *S3ToolCliConfig {
 func Parse(args []string) error {
 	var cfg S3ToolCliConfig
 	cmd := rootCmd(&cfg)
+	runRoot := false
+	cmd.Run = func(cmd *cobra.Command, args []string) {
+		runRoot = true
+	}
+
 	cmd.AddCommand(completionCmd())
 
 	cmd.SetArgs(args)
@@ -41,10 +46,6 @@ func Parse(args []string) error {
 		return err
 	}
 
-	runRoot := false
-	cmd.Run = func(cmd *cobra.Command, args []string) {
-		runRoot = true
-	}
 	if !runRoot {
 		os.Exit(0)
 		return nil
