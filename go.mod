@@ -8,7 +8,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.87.2
 	github.com/aws/smithy-go v1.23.0
 	github.com/gdamore/tcell/v2 v2.9.0
-	github.com/rivo/tview v0.0.0-20250625164341-a4a78f1e05cb
+	github.com/rivo/tview v0.42.0
 	github.com/spf13/cobra v1.9.1
 	golang.org/x/image v0.30.0
 )
