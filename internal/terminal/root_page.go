@@ -64,19 +64,20 @@ func NewRootPage() *RootPage {
 	return a
 }
 
-func (a *RootPage) Modal(p ModalBuilder, width, height int) {
+func (a *RootPage) Modal(p ModalBuilder) {
 	name := "modal_" + strconv.FormatInt(time.Now().UnixNano(), 16)
 	a.openModalNames = append(a.openModalNames, name)
 
 	content := p(func() {
 		a.closeModal(name)
 	})
+
 	modal := tview.NewFlex().
 		AddItem(nil, 0, 1, false).
 		AddItem(tview.NewFlex().SetDirection(tview.FlexRow).
 			AddItem(nil, 0, 1, false).
-			AddItem(content, height, 1, true).
-			AddItem(nil, 0, 1, false), width, 1, true).
+			AddItem(content, 0, 1, true).
+			AddItem(nil, 0, 1, false), 0, 1, true).
 		AddItem(nil, 0, 1, false)
 
 	a.pages.AddPage(name, modal, true, true)
@@ -139,21 +140,17 @@ func (a *RootPage) closePage() {
 }
 
 func (a *RootPage) SetError(err error) {
-	a.Modal(func(close func()) tview.Primitive {
-		textView := tview.NewTextView()
-		textView.SetTextAlign(tview.AlignCenter)
-		textView.SetBorder(true)
-		textView.SetBorderStyle(DefaultTheme.ErrorBorder)
-		textView.SetTitleColor(DefaultTheme.ErrorTitle)
-		textView.SetTitleAlign(tview.AlignLeft)
-		textView.SetTextStyle(DefaultTheme.ErrorMessage)
-		textView.SetBorderPadding(0, 0, 1, 1)
+	title, message := errorText(err)
 
-		title, message := errorText(err)
-		textView.SetTitle(" Error: " + title + " ")
-		textView.SetText(message)
-		return textView
-	}, 60, 10)
+	a.Modal(func(close func()) tview.Primitive {
+		return NewModal().
+			SetTextStyle(DefaultTheme.ErrorMessage).
+			SetText(message).
+			AddButtons([]string{"OK"}).
+			SetDoneFunc(func(buttonLabel string, formValues map[string]string) {
+				close()
+			}).SetTitle(" Error: " + title)
+	})
 }
 
 func (a *RootPage) UpdateContext(c Context) {

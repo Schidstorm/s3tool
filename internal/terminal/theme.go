@@ -9,12 +9,12 @@ type Theme struct {
 	TableSelected      tcell.Style
 	TableCell          tcell.Style
 	PageBorder         tcell.Style
+	ModalBorder        tcell.Style
 	ProfileKey         tcell.Style
 	ProfileValue       tcell.Style
 	PageTitlePrimary   tcell.Color
+	ModalTitlePrimary  tcell.Color
 	PageTitleSecondary tcell.Color
-	ErrorBorder        tcell.Style
-	ErrorTitle         tcell.Color
 	ErrorMessage       tcell.Style
 }
 
@@ -25,11 +25,11 @@ var DefaultTheme = Theme{
 	TableSelected:      tcell.StyleDefault.Foreground(tcell.ColorBlack).Background(tcell.ColorLightBlue),
 	TableCell:          tcell.StyleDefault.Foreground(tcell.ColorWhite),
 	PageBorder:         tcell.StyleDefault.Foreground(tcell.ColorNavy),
+	ModalBorder:        tcell.StyleDefault.Foreground(tcell.ColorNavy),
 	ProfileKey:         tcell.StyleDefault.Foreground(tcell.ColorOrange),
 	ProfileValue:       tcell.StyleDefault.Foreground(tcell.ColorWhite).Bold(true),
 	PageTitlePrimary:   tcell.ColorLightBlue,
+	ModalTitlePrimary:  tcell.ColorLightBlue,
 	PageTitleSecondary: tcell.ColorGray,
-	ErrorBorder:        tcell.StyleDefault.Foreground(tcell.ColorDarkGray),
-	ErrorTitle:         tcell.ColorLightBlue,
-	ErrorMessage:       tcell.StyleDefault.Foreground(tcell.ColorRed),
+	ErrorMessage:       tcell.StyleDefault.Foreground(tcell.ColorWhite).Background(tcell.ColorRed),
 }

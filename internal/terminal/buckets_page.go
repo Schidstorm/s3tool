@@ -52,19 +52,26 @@ func (b *BucketsPage) Hotkeys() map[tcell.EventKey]Hotkey {
 			Title: "Delete Bucket",
 			Handler: func(event *tcell.EventKey) *tcell.EventKey {
 				if selected, ok := b.GetSelectedRow(); ok {
-					err := b.context.S3Client().DeleteBucket(context.Background(), aws.ToString(selected.Name))
-					if err != nil {
-						b.context.SetError(err)
-					}
-					err = b.Load()
-					if err != nil {
-						b.context.SetError(err)
-					}
+					b.context.Modal(ConfirmModal("Are you sure you want to delete the bucket '"+aws.ToString(selected.Name)+"'?", func() {
+						b.deleteBucket(selected)
+					}))
 				}
 
 				return nil
 			},
 		},
+	}
+}
+
+func (b *BucketsPage) deleteBucket(bucket types.Bucket) {
+	err := b.context.S3Client().DeleteBucket(context.Background(), aws.ToString(bucket.Name))
+	if err != nil {
+		b.context.SetError(err)
+	}
+
+	err = b.Load()
+	if err != nil {
+		b.context.SetError(err)
 	}
 }
 
@@ -87,24 +94,23 @@ func (b *BucketsPage) Load() error {
 
 func (b *BucketsPage) newBucketForm() {
 	b.context.Modal(func(close func()) tview.Primitive {
-		form := tview.NewForm()
-		form.AddInputField("Name", "", 20, nil, func(text string) {})
-		form.AddInputField("Region", "", 20, nil, func(text string) {})
-		form.AddButton("Create", func() {
-			b.createBucket(form)
-			close()
-		})
-		form.AddButton("Cancel", func() {
-			close()
-		})
-		return form
-	}, 40, 10)
-
+		return NewModal().
+			SetTitle("New Bucket").
+			AddInput().SetLabel("Region").
+			AddInput().SetLabel("Name").
+			AddButtons([]string{"Create", "Cancel"}).
+			SetDoneFunc(func(buttonLabel string, values map[string]string) {
+				if buttonLabel == "Create" {
+					b.createBucket(values)
+					close()
+				}
+			})
+	})
 }
 
-func (b *BucketsPage) createBucket(form *tview.Form) {
-	name := form.GetFormItemByLabel("Name").(*tview.InputField).GetText()
-	region := form.GetFormItemByLabel("Region").(*tview.InputField).GetText()
+func (b *BucketsPage) createBucket(values map[string]string) {
+	name := values["Name"]
+	region := values["Region"]
 
 	if name == "" {
 		b.context.SetError(errors.New("bucket name cannot be empty"))

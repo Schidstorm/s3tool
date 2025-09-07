@@ -105,23 +105,29 @@ func (b *ObjectsPage) Hotkeys() map[tcell.EventKey]Hotkey {
 			Title: "Delete Object",
 			Handler: func(event *tcell.EventKey) *tcell.EventKey {
 				if selected, ok := b.GetSelectedRow(); ok {
-					err := b.context.S3Client().DeleteObject(
-						context.Background(),
-						b.context.Bucket(),
-						aws.ToString(selected.Object.Key),
-					)
-					if err != nil {
-						b.context.SetError(err)
-					}
-					err = b.Load()
-					if err != nil {
-						b.context.SetError(err)
-					}
+					b.context.Modal(ConfirmModal("Are you sure you want to delete the object '"+aws.ToString(selected.Object.Key)+"'?", func() {
+						b.deleteObject(selected)
+					}))
 				}
 
 				return nil
 			},
 		},
+	}
+}
+
+func (b *ObjectsPage) deleteObject(object s3lib.Object) {
+	err := b.context.S3Client().DeleteObject(
+		context.Background(),
+		b.context.Bucket(),
+		aws.ToString(object.Object.Key),
+	)
+	if err != nil {
+		b.context.SetError(err)
+	}
+	err = b.Load()
+	if err != nil {
+		b.context.SetError(err)
 	}
 }
 
@@ -166,33 +172,33 @@ func humanizeSize(sizep *int64) string {
 
 func (b *ObjectsPage) newObjectForm() {
 	b.context.Modal(func(close func()) tview.Primitive {
-		form := tview.NewForm()
-		form.AddInputField("Name", "", 20, nil, func(text string) {})
-		form.AddButton("Create", func() {
-			if err := b.createObject(form); err != nil {
-				b.context.SetError(err)
-			}
-			close()
-		})
-		form.AddButton("Cancel", func() {
-			close()
-		})
-		return form
-	}, 40, 10)
+		return NewModal().
+			SetTitle("New Object").
+			AddInput().SetLabel("Name").
+			AddButtons([]string{"Create", "Cancel"}).
+			SetDoneFunc(func(buttonLabel string, values map[string]string) {
+				if buttonLabel == "Create" {
+					b.createObject(values)
+					close()
+				}
+			})
+	})
 }
 
-func (b *ObjectsPage) createObject(form *tview.Form) error {
-	name := form.GetFormItemByLabel("Name").(*tview.InputField).GetText()
+func (b *ObjectsPage) createObject(values map[string]string) {
+	name := values["Name"]
 	name = strings.TrimSpace(name)
 	if name == "" {
-		return errors.New("object name cannot be empty")
+		b.context.SetError(errors.New("object name cannot be empty"))
+		return
 	}
 
 	name = b.context.ObjectKey() + name
 
 	tmpDir, err := os.MkdirTemp("", "s3tool")
 	if err != nil {
-		return err
+		b.context.SetError(err)
+		return
 	}
 
 	tmpFilePath := tmpDir + "/" + name
@@ -202,27 +208,36 @@ func (b *ObjectsPage) createObject(form *tview.Form) error {
 
 	err = os.MkdirAll(path.Dir(tmpFilePath), 0755)
 	if err != nil {
-		return err
+		b.context.SetError(err)
+		return
 	}
 
 	err = os.WriteFile(tmpFilePath, nil, 0644)
 	if err != nil {
-		return err
+		b.context.SetError(err)
+		return
 	}
 
 	err = EditFile(b.context, tmpFilePath)
 	if err != nil {
-		return err
+		b.context.SetError(err)
+		return
 	}
 
 	if _, err := os.Stat(tmpFilePath); os.IsNotExist(err) {
-		return nil
+		// File was deleted, do nothing
+		return
 	}
 
 	err = b.context.S3Client().UploadFile(context.Background(), b.context.Bucket(), name, tmpFilePath)
 	if err != nil {
-		return err
+		b.context.SetError(err)
+		return
 	}
 
-	return b.Load()
+	err = b.Load()
+	if err != nil {
+		b.context.SetError(err)
+		return
+	}
 }
