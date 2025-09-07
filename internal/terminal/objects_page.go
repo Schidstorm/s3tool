@@ -198,9 +198,9 @@ func (b *ObjectsPage) newObjectForm() {
 			AddInput().SetLabel("Name").
 			AddButtons([]string{"Create", "Cancel"}).
 			SetDoneFunc(func(buttonLabel string, values map[string]string) {
+				close()
 				if buttonLabel == "Create" {
 					b.createObject(values)
-					close()
 				}
 			})
 	})

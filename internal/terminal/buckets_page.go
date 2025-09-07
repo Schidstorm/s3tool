@@ -100,9 +100,9 @@ func (b *BucketsPage) newBucketForm() {
 			AddInput().SetLabel("Name").
 			AddButtons([]string{"Create", "Cancel"}).
 			SetDoneFunc(func(buttonLabel string, values map[string]string) {
+				close()
 				if buttonLabel == "Create" {
 					b.createBucket(values)
-					close()
 				}
 			})
 	})
