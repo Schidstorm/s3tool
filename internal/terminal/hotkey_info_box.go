@@ -36,11 +36,11 @@ func (info *HotkeyInfoBox) Update(pageContent PageContent) {
 	row := 0
 	for key, hk := range hotkeys {
 		keyCell := tview.NewTableCell(eventKeyToString(key))
-		keyCell.SetStyle(DefaultTheme.HotkeyKey)
+		keyCell.SetStyle(DefaultStyle.Foreground(DefaultTheme.KeyColor))
 		keyCell.SetExpansion(1)
 
 		titleCell := tview.NewTableCell(hk.Title)
-		titleCell.SetStyle(DefaultTheme.HotkeyTitle)
+		titleCell.SetStyle(DefaultStyle.Foreground(DefaultTheme.SecondaryColor))
 		titleCell.SetExpansion(5)
 
 		info.SetCell(row, 0, keyCell)

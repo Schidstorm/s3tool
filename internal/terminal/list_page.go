@@ -64,7 +64,7 @@ func (b *ListPage[TItem]) update() {
 		cell := tview.NewTableCell(col)
 		cell.SetAlign(tview.AlignLeft)
 		cell.SetExpansion(1)
-		cell.SetStyle(DefaultTheme.TableHeader)
+		cell.SetStyle(DefaultStyle.Foreground(DefaultTheme.PrimaryColor).Bold(true))
 		cell.SetSelectable(false)
 		b.tviewTable.SetCell(0, colIndex, cell)
 	}
@@ -74,9 +74,9 @@ func (b *ListPage[TItem]) update() {
 			cell := tview.NewTableCell(item)
 			cell.SetAlign(tview.AlignLeft)
 			cell.SetExpansion(1)
-			cell.SetStyle(DefaultTheme.TableCell)
+			cell.SetStyle(DefaultStyle.Foreground(DefaultTheme.PrimaryColor))
 			cell.SetSelectable(true)
-			cell.SelectedStyle = DefaultTheme.TableSelected
+			cell.SelectedStyle = DefaultTheme.HighlightStyle
 			b.tviewTable.SetCell(rowIndex+1, columnIndex, cell)
 		}
 	}

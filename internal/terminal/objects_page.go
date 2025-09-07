@@ -153,7 +153,7 @@ func humanizeTime(t *time.Time) string {
 		return ""
 	}
 
-	return t.In(time.Local).Format("2006-01-02 15:04:05")
+	return t.In(time.Local).Format("2006-01-02 15:04:05") + " (" + timeAgo(t) + ")"
 }
 
 func humanizeSize(sizep *int64) string {
@@ -168,6 +168,27 @@ func humanizeSize(sizep *int64) string {
 		size /= 1024
 	}
 	return fmt.Sprintf("%d %s", size, units[i])
+}
+
+func timeAgo(t *time.Time) string {
+	if t == nil {
+		return ""
+	}
+
+	duration := time.Since(*t)
+	if duration < time.Minute {
+		return fmt.Sprintf("%d seconds ago", int(duration.Seconds()))
+	} else if duration < time.Hour {
+		return fmt.Sprintf("%d minutes ago", int(duration.Minutes()))
+	} else if duration < 24*time.Hour {
+		return fmt.Sprintf("%d hours ago", int(duration.Hours()))
+	} else if duration < 30*24*time.Hour {
+		return fmt.Sprintf("%d days ago", int(duration.Hours()/24))
+	} else if duration < 12*30*24*time.Hour {
+		return fmt.Sprintf("%d months ago", int(duration.Hours()/(24*30)))
+	} else {
+		return fmt.Sprintf("%d years ago", int(duration.Hours()/(24*365)))
+	}
 }
 
 func (b *ObjectsPage) newObjectForm() {

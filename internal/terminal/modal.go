@@ -169,6 +169,7 @@ func (m *Modal) HasFocus() bool {
 
 // Draw draws this primitive onto the screen.
 func (m *Modal) Draw(screen tcell.Screen) {
+
 	// Calculate the width of this modal.
 	buttonsWidth := 0
 	for i := 0; i < m.form.GetButtonCount(); i++ {
@@ -186,8 +187,8 @@ func (m *Modal) Draw(screen tcell.Screen) {
 	if len(lines) == 1 && lines[0] == "" {
 		lines = nil
 	}
+	fg, _, _ := m.textStyle.Decompose()
 	for _, line := range lines {
-		fg, _, _ := m.textStyle.Decompose()
 		m.frame.AddText(line, true, tview.AlignCenter, fg)
 	}
 
@@ -197,11 +198,25 @@ func (m *Modal) Draw(screen tcell.Screen) {
 	if m.form.GetButtonCount() > 0 {
 		buttonSize = 1
 	}
+	if lines != nil {
+		padding += 1 // extra padding if there is text
+	}
 	height := len(lines) + padding + buttonSize + m.form.GetFormItemCount()*2
 	width += 4
 	x := (screenWidth - width) / 2
 	y := (screenHeight - height) / 2
 	m.SetRect(x, y, width, height)
+
+	// Set color of the form's input fields.
+	for i := 0; i < m.form.GetFormItemCount(); i++ {
+		inputField, ok := m.form.GetFormItem(i).(*tview.InputField)
+		if !ok {
+			continue
+		}
+		_, bg, _ := m.textStyle.Decompose()
+		inputField.SetFieldBackgroundColor(bg)
+		inputField.SetFieldTextColor(tview.Styles.PrimaryTextColor)
+	}
 
 	// Draw the frame.
 	m.Box.DrawForSubclass(screen, m)

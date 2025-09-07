@@ -4,10 +4,10 @@ import "github.com/rivo/tview"
 
 func ConfirmModal(message string, onConfirm func()) ModalBuilder {
 	return func(close func()) tview.Primitive {
-		modal := tview.NewModal().
+		modal := NewModal().
 			SetText(message).
 			AddButtons([]string{"Cancel", "Confirm"}).
-			SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+			SetDoneFunc(func(buttonLabel string, values map[string]string) {
 				close()
 				if buttonLabel == "Confirm" {
 					onConfirm()

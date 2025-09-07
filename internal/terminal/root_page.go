@@ -35,7 +35,7 @@ func NewRootPage() *RootPage {
 
 	content := tview.NewPages()
 	content.SetBorder(true)
-	content.SetBorderStyle(DefaultTheme.PageBorder)
+	content.SetBorderStyle(DefaultStyle.Foreground(DefaultTheme.BorderColor))
 	content.SetBorderPadding(0, 0, 1, 1)
 
 	flex := tview.NewFlex()
@@ -117,7 +117,7 @@ func (a *RootPage) OpenPage(pageContent PageContent) {
 func (a *RootPage) openPage(page *Page) {
 	a.pages.AddPage(page.Title(), page, true, true)
 	a.pages.SetTitle(" " + page.Title() + " ")
-	a.pages.SetTitleColor(DefaultTheme.PageTitlePrimary)
+	a.pages.SetTitleColor(DefaultTheme.PrimaryColor)
 	a.pages.SwitchToPage(page.Title())
 
 	err := page.content.Load()
@@ -144,7 +144,7 @@ func (a *RootPage) SetError(err error) {
 
 	a.Modal(func(close func()) tview.Primitive {
 		return NewModal().
-			SetTextStyle(DefaultTheme.ErrorMessage).
+			SetTextStyle(DefaultStyle.Foreground(DefaultTheme.PrimaryColor).Background(DefaultTheme.ErrorColor)).
 			SetText(message).
 			AddButtons([]string{"OK"}).
 			SetDoneFunc(func(buttonLabel string, formValues map[string]string) {
