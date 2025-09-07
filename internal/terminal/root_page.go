@@ -117,7 +117,7 @@ func (a *RootPage) OpenPage(pageContent PageContent) {
 func (a *RootPage) openPage(page *Page) {
 	a.pages.AddPage(page.Title(), page, true, true)
 	a.pages.SetTitle(" " + page.Title() + " ")
-	a.pages.SetTitleColor(DefaultTheme.PrimaryColor)
+	a.pages.SetTitleColor(DefaultTheme.SecondaryColor)
 	a.pages.SwitchToPage(page.Title())
 
 	err := page.content.Load()

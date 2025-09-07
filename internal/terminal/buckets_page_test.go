@@ -24,7 +24,7 @@ func TestBucketsPage(t *testing.T) {
 
 	assert.EqualValues(t, [][]string{
 		{"Bucket Name", "Region", "Created At"},
-		{"test-bucket", "eu-central-1", "2023-10-01 12:00:00"},
-		{"test-bucket-2", "eu-central-2", "2022-10-02 12:00:00"},
+		{"test-bucket", "eu-central-1", "2023-10-01 12:00:00 (1 years ago)"},
+		{"test-bucket-2", "eu-central-2", "2022-10-02 12:00:00 (2 years ago)"},
 	}, rows)
 }

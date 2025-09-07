@@ -26,8 +26,8 @@ func TestObjectsPage(t *testing.T) {
 
 	assert.EqualValues(t, [][]string{
 		{"Name", "Size", "Last Modified"},
-		{"file1.txt", "1 KiB", "2023-10-01 12:00:00"},
-		{"file2.txt", "2 KiB", "2022-10-02 12:00:00"},
+		{"file1.txt", "1 KiB", "2023-10-01 12:00:00 (1 years ago)"},
+		{"file2.txt", "2 KiB", "2022-10-02 12:00:00 (2 years ago)"},
 	}, rows)
 
 	assert.NotNil(t, page)

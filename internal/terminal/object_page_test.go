@@ -32,7 +32,7 @@ func TestObjectPage(t *testing.T) {
 		{"Size", "1 KiB"},
 		{"ETag", "etag1"},
 		{"LegalHold", "OFF"},
-		{"LastModified", "2023-10-01 12:00:00"},
+		{"LastModified", "2023-10-01 12:00:00 (1 years ago)"},
 		{"Tags", "Environment=Test"},
 	}, rows)
 }
