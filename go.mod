@@ -10,7 +10,7 @@ require (
 	github.com/gdamore/tcell/v2 v2.9.0
 	github.com/rivo/tview v0.42.0
 	github.com/spf13/cobra v1.10.1
-	golang.org/x/image v0.30.0
+	golang.org/x/image v0.31.0
 )
 
 require (
@@ -43,6 +43,6 @@ require (
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/sys v0.35.0 // indirect
 	golang.org/x/term v0.34.0 // indirect
-	golang.org/x/text v0.28.0 // indirect
+	golang.org/x/text v0.29.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1
 )
