@@ -9,7 +9,7 @@ require (
 	github.com/aws/smithy-go v1.23.0
 	github.com/gdamore/tcell/v2 v2.9.0
 	github.com/rivo/tview v0.42.0
-	github.com/spf13/cobra v1.10.1
+	github.com/spf13/cobra v1.10.2
 	golang.org/x/image v0.31.0
 )
 
