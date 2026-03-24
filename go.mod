@@ -1,6 +1,6 @@
 module github.com/schidstorm/s3tool
 
-go 1.24.2
+go 1.25.0
 
 require (
 	github.com/aws/aws-sdk-go-v2 v1.39.2
@@ -10,7 +10,7 @@ require (
 	github.com/gdamore/tcell/v2 v2.9.0
 	github.com/rivo/tview v0.42.0
 	github.com/spf13/cobra v1.10.1
-	golang.org/x/image v0.31.0
+	golang.org/x/image v0.38.0
 )
 
 require (
@@ -43,6 +43,6 @@ require (
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/sys v0.35.0 // indirect
 	golang.org/x/term v0.34.0 // indirect
-	golang.org/x/text v0.29.0 // indirect
+	golang.org/x/text v0.35.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1
 )
