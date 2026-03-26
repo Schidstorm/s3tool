@@ -3,10 +3,10 @@ module github.com/schidstorm/s3tool
 go 1.24.2
 
 require (
-	github.com/aws/aws-sdk-go-v2 v1.39.2
+	github.com/aws/aws-sdk-go-v2 v1.41.5
 	github.com/aws/aws-sdk-go-v2/config v1.31.12
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.88.3
-	github.com/aws/smithy-go v1.23.0
+	github.com/aws/smithy-go v1.24.2
 	github.com/gdamore/tcell/v2 v2.9.0
 	github.com/rivo/tview v0.42.0
 	github.com/spf13/cobra v1.10.1
