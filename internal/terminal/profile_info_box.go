@@ -38,7 +38,7 @@ func (info *ProfileInfoBox) UpdateContext(c Context) {
 
 	infoItems := s3ClientToInfos(c)
 	for row, infoItem := range infoItems {
-		info.table.SetCell(row, 0, tview.NewTableCell(infoItem.Title).SetStyle(DefaultStyle.Foreground(DefaultTheme.LabelColor)))
+		info.table.SetCell(row, 0, tview.NewTableCell(infoItem.Title).SetStyle(DefaultStyle.Foreground(DefaultTheme.LabelColor).Bold(true)))
 		info.table.SetCell(row, 1,
 			tview.NewTableCell(infoItem.Info).
 				SetStyle(DefaultStyle.Foreground(DefaultTheme.PrimaryColor)),

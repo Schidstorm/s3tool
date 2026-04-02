@@ -21,6 +21,7 @@ func NewProfilePage(c Context, loaders []s3lib.ConnectorLoader) *ProfilePage {
 		context:  c,
 	}
 
+	page.ListPage.SetMultiSelect(false)
 	page.ListPage.AddColumn("Type", func(item s3lib.Connector) string { return item.Type() })
 	page.ListPage.AddColumn("Name", func(item s3lib.Connector) string { return item.Name() })
 
