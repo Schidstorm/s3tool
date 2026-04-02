@@ -144,7 +144,7 @@ func (b *ObjectPage) Load() error {
 		}
 
 		b.Table.SetCell(rowIndex, 0, tview.NewTableCell(it.title).
-			SetStyle(DefaultStyle.Foreground(DefaultTheme.PrimaryColor).Bold(true)).
+			SetStyle(DefaultStyle.Foreground(DefaultTheme.LabelColor).Bold(true)).
 			SetAlign(tview.AlignLeft))
 		b.Table.SetCell(rowIndex, 1, tview.NewTableCell(strings.Join(it.value, ", ")).
 			SetSelectedStyle(DefaultStyle.Foreground(DefaultTheme.PrimaryColor)).

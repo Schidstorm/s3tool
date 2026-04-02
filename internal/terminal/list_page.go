@@ -3,8 +3,12 @@ package terminal
 import (
 	"strings"
 
+	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
+
+var listTableRowStyle = DefaultStyle.Foreground(DefaultTheme.PrimaryColor)
+var listTableMultiHighlightedRowStyle = DefaultTheme.MultiHighlightStyle
 
 type Row struct {
 	Header  bool
@@ -32,8 +36,39 @@ func NewListPage[TItem any]() *ListPage[TItem] {
 		table:      NewTable[TItem](),
 	}
 
+	table.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		switch event.Key() {
+		case tcell.KeyRune:
+			if event.Rune() == ' ' {
+				row, _ := table.GetSelection()
+				if row >= 0 {
+					box.table.ToggleHighlight(row - 1)
+					box.drawHighlighted(row - 1)
+					return nil
+				}
+			}
+		}
+		return event
+	})
+
 	box.update()
 	return box
+}
+
+func (b *ListPage[TItem]) drawHighlighted(rowIndex int) {
+	if rowIndex < 0 || rowIndex >= len(b.table.filteredRows) {
+		return
+	}
+
+	highlighted := b.table.IsHighlighted(rowIndex)
+	for colIndex := range b.table.Columns() {
+		cell := b.tviewTable.GetCell(rowIndex+1, colIndex)
+		if highlighted {
+			cell.SetStyle(listTableMultiHighlightedRowStyle)
+		} else {
+			cell.SetStyle(listTableRowStyle)
+		}
+	}
 }
 
 func (b *ListPage[TItem]) SetSelectedFunc(f func(item TItem)) {
@@ -70,11 +105,16 @@ func (b *ListPage[TItem]) update() {
 	}
 
 	for rowIndex, row := range b.table.Rows() {
+		highlighted := b.table.IsHighlighted(rowIndex)
 		for columnIndex, item := range row {
 			cell := tview.NewTableCell(item)
 			cell.SetAlign(tview.AlignLeft)
 			cell.SetExpansion(1)
-			cell.SetStyle(DefaultStyle.Foreground(DefaultTheme.PrimaryColor))
+			if highlighted {
+				cell.SetStyle(listTableMultiHighlightedRowStyle)
+			} else {
+				cell.SetStyle(listTableRowStyle)
+			}
 			cell.SetSelectable(true)
 			cell.SelectedStyle = DefaultTheme.HighlightStyle
 			b.tviewTable.SetCell(rowIndex+1, columnIndex, cell)

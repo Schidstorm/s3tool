@@ -13,6 +13,7 @@ type Table[TItem any] struct {
 	allItems     []TItem
 	filteredRows []int
 	filter       string
+	highlighted  map[int]struct{}
 }
 
 func NewTable[TItem any]() *Table[TItem] {
@@ -82,4 +83,42 @@ func (t *Table[TItem]) Clear() {
 	t.allRows = t.allRows[:0]
 	t.allItems = t.allItems[:0]
 	t.filteredRows = t.filteredRows[:0]
+}
+
+func (t *Table[TItem]) ToggleHighlight(rowIndex int) {
+	if rowIndex < 0 || rowIndex >= len(t.filteredRows) {
+		return
+	}
+
+	rowIndex = t.filteredRows[rowIndex]
+
+	if t.highlighted == nil {
+		t.highlighted = map[int]struct{}{}
+	}
+
+	if _, ok := t.highlighted[rowIndex]; ok {
+		delete(t.highlighted, rowIndex)
+		return
+	}
+
+	t.highlighted[rowIndex] = struct{}{}
+}
+
+func (t *Table[TItem]) GetHighlightedItems() []TItem {
+	var items []TItem
+	for rowIndex := range t.highlighted {
+		items = append(items, t.allItems[rowIndex])
+	}
+	return items
+}
+
+func (t *Table[TItem]) IsHighlighted(rowIndex int) bool {
+	if rowIndex < 0 || rowIndex >= len(t.filteredRows) {
+		return false
+	}
+
+	rowIndex = t.filteredRows[rowIndex]
+
+	_, ok := t.highlighted[rowIndex]
+	return ok
 }
