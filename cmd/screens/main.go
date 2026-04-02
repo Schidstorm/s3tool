@@ -23,11 +23,11 @@ var screens = map[string]func(e *emulator.Emulator){
 	"start_page": func(e *emulator.Emulator) {
 	},
 	"buckets_page": func(e *emulator.Emulator) {
-		e.Send(emulator.KeyEnter)
+		_ = e.Send(emulator.KeyEnter)
 	},
 	"objects_page": func(e *emulator.Emulator) {
-		e.Send(emulator.KeyEnter)
-		e.Send(emulator.KeyEnter)
+		_ = e.Send(emulator.KeyEnter)
+		_ = e.Send(emulator.KeyEnter)
 	},
 }
 
@@ -57,7 +57,9 @@ func generateScreen(outFile string, handler func(e *emulator.Emulator)) error {
 	if err != nil {
 		return err
 	}
-	defer pngFile.Close()
+	defer func() {
+		_ = pngFile.Close()
+	}()
 	if err := png.Encode(pngFile, img); err != nil {
 		return err
 	}

@@ -53,7 +53,7 @@ func (e *Emulator) Run(cols, rows int) error {
 }
 
 func (e *Emulator) Close() {
-	e.app.App.Application.Stop()
+	e.app.Stop()
 }
 
 func (e *Emulator) Send(content string) error {

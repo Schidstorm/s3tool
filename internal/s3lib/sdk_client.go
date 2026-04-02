@@ -26,11 +26,11 @@ func NewSdkClient(client *s3.Client) SdkClient {
 func (c SdkClient) ConnectionParameters(bucket string) ConnectionParameters {
 	var result ConnectionParameters
 
-	ep, err := c.Client.Options().EndpointResolverV2.ResolveEndpoint(context.Background(), s3.EndpointParameters{
+	ep, err := c.Options().EndpointResolverV2.ResolveEndpoint(context.Background(), s3.EndpointParameters{
 		Bucket:         aws.String(bucket),
 		Region:         aws.String(c.Client.Options().Region),
-		UseFIPS:        aws.Bool(c.Client.Options().EndpointOptions.UseFIPSEndpoint == aws.FIPSEndpointStateEnabled),
-		UseDualStack:   aws.Bool(c.Client.Options().EndpointOptions.UseDualStackEndpoint == aws.DualStackEndpointStateEnabled),
+		UseFIPS:        aws.Bool(c.Options().EndpointOptions.UseFIPSEndpoint == aws.FIPSEndpointStateEnabled),
+		UseDualStack:   aws.Bool(c.Options().EndpointOptions.UseDualStackEndpoint == aws.DualStackEndpointStateEnabled),
 		Endpoint:       c.Client.Options().BaseEndpoint,
 		ForcePathStyle: aws.Bool(c.Client.Options().UsePathStyle),
 		Accelerate:     aws.Bool(c.Client.Options().UseAccelerate),
@@ -83,9 +83,11 @@ func (c SdkClient) UploadFile(ctx context.Context, bucket, key, filePath string)
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	defer func() {
+		_ = f.Close()
+	}()
 
-	_, err = c.Client.PutObject(ctx, &s3.PutObjectInput{
+	_, err = c.PutObject(ctx, &s3.PutObjectInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),
 		Body:   f,
@@ -111,9 +113,11 @@ func (c SdkClient) DownloadFile(ctx context.Context, bucket, key, filePath strin
 		}
 		return err
 	}
-	defer result.Body.Close()
+	defer func() {
+		_ = result.Body.Close()
+	}()
 
-	os.Remove(filePath)
+	_ = os.Remove(filePath)
 	err = os.MkdirAll(path.Dir(filePath), 0755)
 	if err != nil {
 		return err
@@ -124,7 +128,9 @@ func (c SdkClient) DownloadFile(ctx context.Context, bucket, key, filePath strin
 		log.Printf("Couldn't create file %v. Here's why: %v\n", filePath, err)
 		return err
 	}
-	defer file.Close()
+	defer func() {
+		_ = file.Close()
+	}()
 	body, err := io.ReadAll(result.Body)
 	if err != nil {
 		log.Printf("Couldn't read object body from %v. Here's why: %v\n", key, err)
@@ -138,14 +144,14 @@ func (c SdkClient) GetObject(ctx context.Context, bucket, key string) (ObjectMet
 	result.Bucket = bucket
 	result.Key = key
 
-	location, err := c.Client.GetBucketLocation(ctx, &s3.GetBucketLocationInput{
+	location, err := c.GetBucketLocation(ctx, &s3.GetBucketLocationInput{
 		Bucket: aws.String(bucket),
 	})
 	if err == nil {
 		result.Region = string(location.LocationConstraint)
 	}
 
-	acl, err := c.Client.GetObjectAcl(ctx, &s3.GetObjectAclInput{
+	acl, err := c.GetObjectAcl(ctx, &s3.GetObjectAclInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),
 	})
@@ -159,7 +165,7 @@ func (c SdkClient) GetObject(ctx context.Context, bucket, key string) (ObjectMet
 		}
 	}
 
-	tagging, err := c.Client.GetObjectTagging(ctx, &s3.GetObjectTaggingInput{
+	tagging, err := c.GetObjectTagging(ctx, &s3.GetObjectTaggingInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),
 	})
@@ -175,7 +181,7 @@ func (c SdkClient) GetObject(ctx context.Context, bucket, key string) (ObjectMet
 		Key:    aws.String(key),
 	})
 	if err == nil {
-		attr.Body.Close()
+		_ = attr.Body.Close()
 		result.Type = attr.ContentType
 		result.Size = attr.ContentLength
 		result.LastModified = attr.LastModified

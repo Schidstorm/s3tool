@@ -14,9 +14,9 @@ type HotkeyInfoBox struct {
 func NewHotkeyInfoBox() *HotkeyInfoBox {
 	table := tview.NewTable().SetBorders(false)
 	table.SetSelectable(false, false)
-	table.Box.SetBorder(false)
-	table.Box.SetTitle("Hotkeys")
-	table.Box.SetTitleAlign(tview.AlignLeft)
+	table.SetBorder(false)
+	table.SetTitle("Hotkeys")
+	table.SetTitleAlign(tview.AlignLeft)
 
 	info := &HotkeyInfoBox{
 		Table: table,

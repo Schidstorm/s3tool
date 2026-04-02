@@ -55,7 +55,7 @@ func (b *BucketsPage) Hotkeys() map[tcell.EventKey]Hotkey {
 			Handler: func(event *tcell.EventKey) *tcell.EventKey {
 				items := b.table.GetHighlightedItems()
 				if len(items) == 0 {
-					if obj, ok := b.ListPage.GetSelectedRow(); ok {
+					if obj, ok := b.GetSelectedRow(); ok {
 						items = []types.Bucket{obj}
 					}
 				}
@@ -101,7 +101,7 @@ func (b *BucketsPage) deleteBucket(bucket types.Bucket) {
 }
 
 func (b *BucketsPage) Load() error {
-	b.ListPage.ClearRows()
+	b.ClearRows()
 
 	paginator := b.context.S3Client().ListBuckets(context.Background())
 	var buckets []types.Bucket
@@ -113,7 +113,7 @@ func (b *BucketsPage) Load() error {
 		buckets = append(buckets, page...)
 	}
 
-	b.ListPage.AddAll(buckets)
+	b.AddAll(buckets)
 	return nil
 }
 

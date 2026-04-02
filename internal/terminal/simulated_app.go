@@ -19,7 +19,7 @@ func NewSimulatedApp(page PageContent, loaders ...s3lib.ConnectorLoader) Simulat
 	}
 
 	screen := tcell.NewSimulationScreen("")
-	app.Application.SetScreen(screen)
+	app.SetScreen(screen)
 
 	if page == nil {
 		page = NewProfilePage(app.CreateContext(), loaders)

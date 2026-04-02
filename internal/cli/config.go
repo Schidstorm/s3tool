@@ -81,7 +81,7 @@ func rootCmd(cfg *S3ToolCliConfig) *cobra.Command {
 	flag.BoolVar(&cfg.Loaders.Aws, "loaders.aws", Config.Loaders.Aws, "Enable AWS loader")
 	flag.BoolVar(&cfg.Loaders.S3Tool, "loaders.s3tool", Config.Loaders.S3Tool, "Enable S3Tool loader")
 	flag.BoolVar(&cfg.Loaders.Memory, "loaders.memory", Config.Loaders.Memory, "Enable Memory loader (for testing purposes)")
-	flag.MarkHidden("loaders.memory")
+	_ = flag.MarkHidden("loaders.memory")
 
 	return cmd
 }

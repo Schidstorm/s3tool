@@ -17,7 +17,11 @@ func main() {
 	}
 
 	app := terminal.NewApp(nil, loaders()...)
-	app.Run()
+	err = app.Run()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error running application: %v\n", err)
+		os.Exit(1)
+	}
 
 }
 

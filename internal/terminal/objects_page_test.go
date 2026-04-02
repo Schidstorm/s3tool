@@ -20,8 +20,9 @@ func TestObjectsPage(t *testing.T) {
 	page := NewObjectsPage(NewContext().WithErrorFunc(func(err error) {
 		t.Error(err)
 	}).WithClient(client).WithBucket("test-bucket"))
-	page.Load()
-	rows := getTableRows(page.ListPage.tviewTable)
+
+	assert.NoError(t, page.Load())
+	rows := getTableRows(page.tviewTable)
 	assert.Equal(t, 3, len(rows))
 
 	assert.EqualValues(t, [][]string{
