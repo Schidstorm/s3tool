@@ -4,7 +4,10 @@ on:
   push:
     branches: [ "main" ]
   pull_request:
-    branches: [ "main" ]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   ci:
@@ -27,11 +30,18 @@ jobs:
       - name: Test
         run: go test -v -coverprofile=coverage.out ./...
 
+      - name: Coverage Gate
+        run: |
+          total=$(go tool cover -func=coverage.out | awk '/^total:/ {gsub("%", "", $3); print $3}')
+          min=50
+          echo "Total coverage: ${total}% (min ${min}%)"
+          awk -v t="$total" -v m="$min" 'BEGIN { exit((t+0 < m+0) ? 1 : 0) }'
+
       - name: Lint
         uses: golangci/golangci-lint-action@v9
         with:
           version: v2.11.4
           args: --timeout=5m ./...
-              
 
-          
+
+
