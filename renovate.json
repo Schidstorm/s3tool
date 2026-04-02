@@ -6,6 +6,7 @@
     ":separateMultipleMajorReleases",
     ":disableMajorUpdates"
   ],
+  "minimumReleaseAge": "3 day",
   "enabledManagers": [
     "gomod",
     "github-actions"
