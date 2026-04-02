@@ -34,7 +34,7 @@ func (a *App) CreateContext() Context {
 		WithOpenPageFunc(a.OpenPage).
 		WithErrorFunc(a.SetError).
 		WithModalFunc(a.Modal).
-		WithSuspendAppFunc(a.Application.Suspend)
+		WithSuspendAppFunc(a.Suspend)
 }
 
 func (a *App) Run() error {

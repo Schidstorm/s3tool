@@ -13,7 +13,9 @@ func editObject(c Context) error {
 	if err != nil {
 		return err
 	}
-	defer os.Remove(tmpFilePath)
+	defer func() {
+		_ = os.Remove(tmpFilePath)
+	}()
 
 	oldHash, err := fileHash(tmpFilePath)
 	if err != nil {
@@ -49,7 +51,9 @@ func viewObject(c Context) error {
 	if err != nil {
 		return err
 	}
-	defer os.Remove(tmpFilePath)
+	defer func() {
+		_ = os.Remove(tmpFilePath)
+	}()
 
 	return ShowFile(c, tmpFilePath)
 }
@@ -76,7 +80,9 @@ func fileHash(filePath string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer file.Close()
+	defer func() {
+		_ = file.Close()
+	}()
 
 	var buffer [4096]byte
 	for {

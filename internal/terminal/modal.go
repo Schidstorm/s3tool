@@ -55,7 +55,7 @@ func (m *Modal) SetTextStyle(style tcell.Style) *Modal {
 	_, bg, _ := style.Decompose()
 	m.form.SetBackgroundColor(bg)
 	m.frame.SetBackgroundColor(bg)
-	m.Box.SetBackgroundColor(bg)
+	m.SetBackgroundColor(bg)
 	return m
 }
 
@@ -103,7 +103,7 @@ func (m *Modal) SetText(text string) *Modal {
 func (m *Modal) SetTitle(title string) *Modal {
 	m.title = title
 	m.Box.SetTitle(" " + title + " ")
-	m.Box.SetTitleAlign(tview.AlignLeft)
+	m.SetTitleAlign(tview.AlignLeft)
 	return m
 }
 
@@ -219,7 +219,7 @@ func (m *Modal) Draw(screen tcell.Screen) {
 	}
 
 	// Draw the frame.
-	m.Box.DrawForSubclass(screen, m)
+	m.DrawForSubclass(screen, m)
 	x, y, width, height = m.GetInnerRect()
 	m.frame.SetRect(x, y, width, height)
 	m.frame.Draw(screen)

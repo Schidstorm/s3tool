@@ -12,9 +12,9 @@ type ProfileInfoBox struct {
 func NewProfileInfoBox() *ProfileInfoBox {
 	table := tview.NewTable().SetBorders(false)
 	table.SetSelectable(false, false)
-	table.Box.SetBorder(false)
-	table.Box.SetTitle("Profile Info")
-	table.Box.SetTitleAlign(tview.AlignLeft)
+	table.SetBorder(false)
+	table.SetTitle("Profile Info")
+	table.SetTitleAlign(tview.AlignLeft)
 
 	flex := tview.NewFlex()
 	flex.SetDirection(tview.FlexColumn)

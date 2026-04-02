@@ -19,8 +19,8 @@ func TestBucketsPage(t *testing.T) {
 	page := NewBucketsPage(NewContext().WithClient(client).WithErrorFunc(func(err error) {
 		t.Error(err)
 	}))
-	page.Load()
-	rows := getTableRows(page.ListPage.tviewTable)
+	assert.NoError(t, page.Load())
+	rows := getTableRows(page.tviewTable)
 
 	assert.EqualValues(t, [][]string{
 		{"Bucket Name", "Region", "Created At"},

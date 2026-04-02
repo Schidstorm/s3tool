@@ -21,11 +21,11 @@ func NewProfilePage(c Context, loaders []s3lib.ConnectorLoader) *ProfilePage {
 		context:  c,
 	}
 
-	page.ListPage.SetMultiSelect(false)
-	page.ListPage.AddColumn("Type", func(item s3lib.Connector) string { return item.Type() })
-	page.ListPage.AddColumn("Name", func(item s3lib.Connector) string { return item.Name() })
+	page.SetMultiSelect(false)
+	page.AddColumn("Type", func(item s3lib.Connector) string { return item.Type() })
+	page.AddColumn("Name", func(item s3lib.Connector) string { return item.Name() })
 
-	page.ListPage.SetSelectedFunc(func(connector s3lib.Connector) {
+	page.SetSelectedFunc(func(connector s3lib.Connector) {
 		client, err := connector.CreateClient(context.Background())
 		if err != nil {
 			c.SetError(err)
@@ -65,13 +65,13 @@ func (b *ProfilePage) Hotkeys() map[tcell.EventKey]Hotkey {
 }
 
 func (b *ProfilePage) Load() error {
-	b.ListPage.ClearRows()
+	b.ClearRows()
 
 	profiles, err := loadConnectors(b.loaders)
 	if err != nil {
 		return err
 	}
 
-	b.ListPage.AddAll(profiles)
+	b.AddAll(profiles)
 	return nil
 }

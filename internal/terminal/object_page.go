@@ -136,17 +136,17 @@ func (b *ObjectPage) Load() error {
 		items = append(items, item{title: "Tags", value: tags})
 	}
 
-	b.Table.Clear()
+	b.Clear()
 	var rowIndex int
 	for _, it := range items {
 		if !matchAnyItems(b.searchTerm, append([]string{it.title}, it.value...)) {
 			continue
 		}
 
-		b.Table.SetCell(rowIndex, 0, tview.NewTableCell(it.title).
+		b.SetCell(rowIndex, 0, tview.NewTableCell(it.title).
 			SetStyle(DefaultStyle.Foreground(DefaultTheme.LabelColor).Bold(true)).
 			SetAlign(tview.AlignLeft))
-		b.Table.SetCell(rowIndex, 1, tview.NewTableCell(strings.Join(it.value, ", ")).
+		b.SetCell(rowIndex, 1, tview.NewTableCell(strings.Join(it.value, ", ")).
 			SetSelectedStyle(DefaultStyle.Foreground(DefaultTheme.PrimaryColor)).
 			SetAlign(tview.AlignLeft))
 		rowIndex++

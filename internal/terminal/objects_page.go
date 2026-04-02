@@ -80,7 +80,7 @@ func (b *ObjectsPage) Hotkeys() map[tcell.EventKey]Hotkey {
 		EventKey(tcell.KeyRune, 'v', 0): {
 			Title: "View Object",
 			Handler: func(event *tcell.EventKey) *tcell.EventKey {
-				if obj, ok := b.ListPage.GetSelectedRow(); ok {
+				if obj, ok := b.GetSelectedRow(); ok {
 					err := viewObject(b.context.WithObjectKey(aws.ToString(obj.Object.Key)))
 					if err != nil {
 						b.context.SetError(err)
@@ -92,7 +92,7 @@ func (b *ObjectsPage) Hotkeys() map[tcell.EventKey]Hotkey {
 		EventKey(tcell.KeyRune, 'e', 0): {
 			Title: "Edit Object",
 			Handler: func(event *tcell.EventKey) *tcell.EventKey {
-				if obj, ok := b.ListPage.GetSelectedRow(); ok {
+				if obj, ok := b.GetSelectedRow(); ok {
 					err := editObject(b.context.WithObjectKey(aws.ToString(obj.Object.Key)))
 					if err != nil {
 						b.context.SetError(err)
@@ -106,7 +106,7 @@ func (b *ObjectsPage) Hotkeys() map[tcell.EventKey]Hotkey {
 			Handler: func(event *tcell.EventKey) *tcell.EventKey {
 				items := b.table.GetHighlightedItems()
 				if len(items) == 0 {
-					if obj, ok := b.ListPage.GetSelectedRow(); ok {
+					if obj, ok := b.GetSelectedRow(); ok {
 						items = []s3lib.Object{obj}
 					}
 				}
@@ -155,7 +155,7 @@ func (b *ObjectsPage) deleteObject(object s3lib.Object) {
 }
 
 func (b *ObjectsPage) Load() error {
-	b.ListPage.ClearRows()
+	b.ClearRows()
 	paginator := b.context.S3Client().ListObjects(context.Background(), b.context.Bucket(), b.context.ObjectKey())
 	var objects []s3lib.Object
 	for paginator.HasMorePages() {
@@ -167,7 +167,7 @@ func (b *ObjectsPage) Load() error {
 		objects = append(objects, page...)
 	}
 
-	b.ListPage.AddAll(objects)
+	b.AddAll(objects)
 	return nil
 }
 
@@ -247,7 +247,7 @@ func (b *ObjectsPage) createObject(values map[string]string) {
 
 	tmpFilePath := tmpDir + "/" + name
 	if _, err := os.Stat(tmpFilePath); err == nil {
-		os.Remove(tmpFilePath)
+		_ = os.Remove(tmpFilePath)
 	}
 
 	err = os.MkdirAll(path.Dir(tmpFilePath), 0755)

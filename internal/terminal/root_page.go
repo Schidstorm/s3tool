@@ -84,7 +84,7 @@ func (a *RootPage) Modal(p ModalBuilder) {
 }
 
 func (a *RootPage) closeModal(name string) {
-	var topModalIndex int = -1
+	var topModalIndex = -1
 	for i := len(a.openModalNames) - 1; i >= 0; i-- {
 		if a.openModalNames[i] == name {
 			topModalIndex = i
@@ -221,10 +221,8 @@ func errorText(err error) (title, message string) {
 func findError[T any](e error) (T, bool) {
 	var errorList []error
 	currentErr := e
-	for {
-		if currentErr == nil {
-			break
-		}
+	for currentErr != nil {
+
 		errorList = append(errorList, currentErr)
 		currentErr = errors.Unwrap(currentErr)
 	}
