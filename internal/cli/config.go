@@ -31,7 +31,7 @@ func DefaultConfig() *S3ToolCliConfig {
 	}
 }
 
-func Parse(args []string) error {
+func ParseAndShouldRun(args []string) (bool, error) {
 	var cfg S3ToolCliConfig
 	cmd := rootCmd(&cfg)
 	runRoot := false
@@ -43,18 +43,17 @@ func Parse(args []string) error {
 
 	cmd.SetArgs(args)
 	if err := cmd.Execute(); err != nil {
-		return err
+		return false, err
 	}
 
 	if !runRoot {
-		os.Exit(0)
-		return nil
+		return false, nil
 	}
 
 	cfg = cleanup(cfg)
 	Config = &cfg
 
-	return nil
+	return true, nil
 }
 
 func cleanup(cfg S3ToolCliConfig) S3ToolCliConfig {

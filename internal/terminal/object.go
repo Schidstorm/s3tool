@@ -3,9 +3,11 @@ package terminal
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"io"
 	"os"
+	"path/filepath"
 )
 
 func editObject(c Context) error {
@@ -14,7 +16,7 @@ func editObject(c Context) error {
 		return err
 	}
 	defer func() {
-		_ = os.Remove(tmpFilePath)
+		_ = os.RemoveAll(filepath.Dir(tmpFilePath))
 	}()
 
 	oldHash, err := fileHash(tmpFilePath)
@@ -52,7 +54,7 @@ func viewObject(c Context) error {
 		return err
 	}
 	defer func() {
-		_ = os.Remove(tmpFilePath)
+		_ = os.RemoveAll(filepath.Dir(tmpFilePath))
 	}()
 
 	return ShowFile(c, tmpFilePath)
@@ -97,5 +99,5 @@ func fileHash(filePath string) (string, error) {
 			return "", err
 		}
 	}
-	return string(sha256Hash.Sum(nil)), nil
+	return hex.EncodeToString(sha256Hash.Sum(nil)), nil
 }

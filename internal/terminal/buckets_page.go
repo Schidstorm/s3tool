@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
@@ -68,13 +67,17 @@ func (b *BucketsPage) Hotkeys() map[tcell.EventKey]Hotkey {
 				if len(items) != 1 {
 					bucketKey = "buckets\n"
 				}
-				modalMessage := fmt.Sprintf("Are you sure you want to delete the %d %s '%s'?", len(items), bucketKey, strings.Join(func() []string {
-					keys := make([]string, len(items))
-					for i, item := range items {
-						keys[i] = aws.ToString(item.Name)
-					}
-					return keys
-				}(), ", "))
+				modalMessage := fmt.Sprintf(
+					"Are you sure you want to delete %d %s? \n%s",
+					len(items),
+					bucketKey,
+					limitedItemsAsString(
+						items,
+						func(item types.Bucket) string {
+							return aws.ToString(item.Name)
+						},
+					),
+				)
 
 				b.context.Modal(ConfirmModal(modalMessage, func() {
 					for _, item := range items {

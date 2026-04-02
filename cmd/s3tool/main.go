@@ -10,10 +10,13 @@ import (
 )
 
 func main() {
-	err := cli.Parse(os.Args[1:])
+	runApp, err := cli.ParseAndShouldRun(os.Args[1:])
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error parsing CLI arguments: %v\n", err)
 		os.Exit(1)
+	}
+	if !runApp {
+		return
 	}
 
 	app := terminal.NewApp(nil, loaders()...)

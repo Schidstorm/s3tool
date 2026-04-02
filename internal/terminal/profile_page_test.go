@@ -46,6 +46,36 @@ func TestLoadConnectorsAggregates(t *testing.T) {
 	}
 }
 
+func TestLoadConnectorsSortsByTypeThenName(t *testing.T) {
+	loaders := []s3lib.ConnectorLoader{
+		profileTestLoader{connectors: []s3lib.Connector{
+			profileTestConnector{name: "zeta", typeName: "s3tool"},
+			profileTestConnector{name: "beta", typeName: "aws"},
+		}},
+		profileTestLoader{connectors: []s3lib.Connector{
+			profileTestConnector{name: "alpha", typeName: "aws"},
+			profileTestConnector{name: "eta", typeName: "s3tool"},
+		}},
+	}
+
+	connectors, err := loadConnectors(loaders)
+	if err != nil {
+		t.Fatalf("loadConnectors failed: %v", err)
+	}
+
+	got := make([]string, len(connectors))
+	for i, c := range connectors {
+		got[i] = c.Type() + ":" + c.Name()
+	}
+
+	expected := []string{"aws:alpha", "aws:beta", "s3tool:eta", "s3tool:zeta"}
+	for i := range expected {
+		if got[i] != expected[i] {
+			t.Fatalf("unexpected order: got %#v, expected %#v", got, expected)
+		}
+	}
+}
+
 func TestLoadConnectorsReturnsError(t *testing.T) {
 	expected := errors.New("boom")
 	loaders := []s3lib.ConnectorLoader{

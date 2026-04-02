@@ -62,9 +62,12 @@ func TestParseUpdatesGlobalConfig(t *testing.T) {
 		Config = original
 	})
 
-	err := Parse([]string{"--profiles", "~/custom", "--loaders.aws=false", "--loaders.s3tool=false"})
+	runApp, err := ParseAndShouldRun([]string{"--profiles", "~/custom", "--loaders.aws=false", "--loaders.s3tool=false"})
 	if err != nil {
 		t.Fatalf("parse failed: %v", err)
+	}
+	if !runApp {
+		t.Fatal("expected Parse to run app for root command")
 	}
 
 	if Config.Loaders.Aws {
@@ -84,8 +87,23 @@ func TestParseInvalidFlagReturnsError(t *testing.T) {
 		Config = original
 	})
 
-	err := Parse([]string{"--does-not-exist"})
+	_, err := ParseAndShouldRun([]string{"--does-not-exist"})
 	if err == nil {
 		t.Fatal("expected parse error for unknown flag")
+	}
+}
+
+func TestParseCompletionReturnsNoRun(t *testing.T) {
+	original := Config
+	t.Cleanup(func() {
+		Config = original
+	})
+
+	runApp, err := ParseAndShouldRun([]string{"completion", "--shell", "bash"})
+	if err != nil {
+		t.Fatalf("expected no error for completion command, got %v", err)
+	}
+	if runApp {
+		t.Fatal("expected runApp false for completion subcommand")
 	}
 }

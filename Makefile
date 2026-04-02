@@ -1,7 +1,9 @@
 
 GOLANGCI_LINT_VERSION ?= v2.11.4
 
-.PHONY: test test-cover tests build build-debug debug fmt vet lint lint-install docs-commands create_test_bucket delete_test_bucket generate-screens
+.PHONY: test test-cover build build-debug debug fmt vet lint lint-install docs-commands create_test_bucket delete_test_bucket generate-screens
+
+check: test fmt vet lint
 
 test:
 	go test -v ./...
@@ -9,8 +11,6 @@ test:
 test-cover:
 	go test -v -cover -coverprofile=coverage.out ./... && \
 	go tool cover -html=coverage.out -o coverage.html
-
-tests: test-cover
 
 build:
 	mkdir -p build && \
