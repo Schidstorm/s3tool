@@ -24,7 +24,7 @@ var DefaultTheme = Theme{
 	InfoColor:           tcell.ColorGreen,
 	BorderColor:         tcell.ColorNavy,
 	HighlightStyle:      tcell.StyleDefault.Foreground(tcell.ColorBlack).Background(tcell.ColorLightBlue),
-	MultiHighlightStyle: tcell.StyleDefault.Foreground(tcell.ColorBlack).Background(tcell.ColorLightCyan),
+	MultiHighlightStyle: tcell.StyleDefault.Foreground(tcell.ColorYellow),
 }
 
 var DefaultStyle = tcell.StyleDefault.Foreground(DefaultTheme.PrimaryColor).Background(tcell.ColorBlack)

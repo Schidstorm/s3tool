@@ -18,8 +18,9 @@ type Row struct {
 type ListPage[TItem any] struct {
 	*tview.Flex
 
-	tviewTable *tview.Table
-	table      *Table[TItem]
+	tviewTable  *tview.Table
+	table       *Table[TItem]
+	multiSelect bool
 }
 
 func NewListPage[TItem any]() *ListPage[TItem] {
@@ -30,29 +31,36 @@ func NewListPage[TItem any]() *ListPage[TItem] {
 	flex.SetDirection(tview.FlexRow)
 	flex.AddItem(table, 0, 1, true)
 
-	box := &ListPage[TItem]{
-		tviewTable: table,
-		Flex:       flex,
-		table:      NewTable[TItem](),
+	listPage := &ListPage[TItem]{
+		tviewTable:  table,
+		Flex:        flex,
+		table:       NewTable[TItem](),
+		multiSelect: true,
 	}
 
-	table.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		switch event.Key() {
-		case tcell.KeyRune:
-			if event.Rune() == ' ' {
-				row, _ := table.GetSelection()
-				if row >= 0 {
-					box.table.ToggleHighlight(row - 1)
-					box.drawHighlighted(row - 1)
-					return nil
-				}
+	table.SetInputCapture(listPage.inputCapture)
+
+	listPage.update()
+	return listPage
+}
+
+func (b *ListPage[TItem]) inputCapture(event *tcell.EventKey) *tcell.EventKey {
+	if !b.multiSelect {
+		return event
+	}
+
+	switch event.Key() {
+	case tcell.KeyRune:
+		if event.Rune() == ' ' {
+			row, _ := b.tviewTable.GetSelection()
+			if row >= 0 {
+				b.table.ToggleHighlight(row - 1)
+				b.drawHighlighted(row - 1)
+				return nil
 			}
 		}
-		return event
-	})
-
-	box.update()
-	return box
+	}
+	return event
 }
 
 func (b *ListPage[TItem]) drawHighlighted(rowIndex int) {
@@ -165,5 +173,13 @@ func (b *ListPage[TItem]) GetSelectedRow() (TItem, bool) {
 
 func (b *ListPage[TItem]) AddColumn(name string, filler func(item TItem) string) {
 	b.table.AddColumn(name, filler)
+	b.update()
+}
+
+func (b *ListPage[TItem]) SetMultiSelect(enabled bool) {
+	b.multiSelect = enabled
+	if !enabled {
+		b.table.ClearHighlights()
+	}
 	b.update()
 }

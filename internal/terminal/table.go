@@ -122,3 +122,7 @@ func (t *Table[TItem]) IsHighlighted(rowIndex int) bool {
 	_, ok := t.highlighted[rowIndex]
 	return ok
 }
+
+func (t *Table[TItem]) ClearHighlights() {
+	t.highlighted = map[int]struct{}{}
+}

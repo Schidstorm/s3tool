@@ -3,6 +3,8 @@ package terminal
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
@@ -51,11 +53,34 @@ func (b *BucketsPage) Hotkeys() map[tcell.EventKey]Hotkey {
 		EventKey(tcell.KeyRune, 'd', 0): {
 			Title: "Delete Bucket",
 			Handler: func(event *tcell.EventKey) *tcell.EventKey {
-				if selected, ok := b.GetSelectedRow(); ok {
-					b.context.Modal(ConfirmModal("Are you sure you want to delete the bucket '"+aws.ToString(selected.Name)+"'?", func() {
-						b.deleteBucket(selected)
-					}))
+				items := b.table.GetHighlightedItems()
+				if len(items) == 0 {
+					if obj, ok := b.ListPage.GetSelectedRow(); ok {
+						items = []types.Bucket{obj}
+					}
 				}
+
+				if len(items) == 0 {
+					return nil
+				}
+
+				bucketKey := "bucket"
+				if len(items) != 1 {
+					bucketKey = "buckets\n"
+				}
+				modalMessage := fmt.Sprintf("Are you sure you want to delete the %d %s '%s'?", len(items), bucketKey, strings.Join(func() []string {
+					keys := make([]string, len(items))
+					for i, item := range items {
+						keys[i] = aws.ToString(item.Name)
+					}
+					return keys
+				}(), ", "))
+
+				b.context.Modal(ConfirmModal(modalMessage, func() {
+					for _, item := range items {
+						b.deleteBucket(item)
+					}
+				}))
 
 				return nil
 			},
