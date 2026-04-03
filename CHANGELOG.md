@@ -1,3 +1,9 @@
+## 0.2.2 (2026-04-03)
+
+### Fix
+
+- added workaround for githubs recursive trigger protection (#67)
+
 ## 0.2.1 (2026-04-03)
 
 ### Fix
