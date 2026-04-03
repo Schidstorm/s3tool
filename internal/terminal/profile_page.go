@@ -2,6 +2,8 @@ package terminal
 
 import (
 	"context"
+	"slices"
+	"strings"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/schidstorm/s3tool/internal/s3lib"
@@ -48,6 +50,13 @@ func loadConnectors(loaders []s3lib.ConnectorLoader) ([]s3lib.Connector, error) 
 		}
 		profiles = append(profiles, loadedProfiles...)
 	}
+
+	slices.SortFunc(profiles, func(a, b s3lib.Connector) int {
+		if byType := strings.Compare(a.Type(), b.Type()); byType != 0 {
+			return byType
+		}
+		return strings.Compare(a.Name(), b.Name())
+	})
 
 	return profiles, nil
 }

@@ -1,0 +1,68 @@
+name: CZ-Bump
+
+on:
+  pull_request:
+    types: [closed]
+    branches: ["main"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pr-merged-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  post-merge-checks:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Build
+        run: go build -v ./...
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test
+        run: go test -v ./...
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install Commitizen
+        run: python -m pip install --upgrade pip commitizen
+
+      - name: Configure Git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Bump version and changelog
+        id: bump
+        shell: bash
+        run: |
+          set -euo pipefail
+          if cz bump --yes; then
+            echo "bumped=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No eligible commits for version bump; skipping push."
+            echo "bumped=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Push bump commit and tag
+        if: steps.bump.outputs.bumped == 'true'
+        run: git push origin HEAD:main --follow-tags

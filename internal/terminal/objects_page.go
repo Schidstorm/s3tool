@@ -119,13 +119,17 @@ func (b *ObjectsPage) Hotkeys() map[tcell.EventKey]Hotkey {
 				if len(items) != 1 {
 					objectKey = "objects\n"
 				}
-				modalMessage := fmt.Sprintf("Are you sure you want to delete the %d %s '%s'?", len(items), objectKey, strings.Join(func() []string {
-					keys := make([]string, len(items))
-					for i, item := range items {
-						keys[i] = aws.ToString(item.Object.Key)
-					}
-					return keys
-				}(), ", "))
+				modalMessage := fmt.Sprintf(
+					"Are you sure you want to delete %d %s? \n%s",
+					len(items),
+					objectKey,
+					limitedItemsAsString(
+						items,
+						func(item s3lib.Object) string {
+							return aws.ToString(item.Object.Key)
+						},
+					),
+				)
 
 				b.context.Modal(ConfirmModal(modalMessage, func() {
 					for _, item := range items {

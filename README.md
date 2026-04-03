@@ -1,5 +1,9 @@
 # s3tool
 
+![CI](https://github.com/schidstorm/s3tool/actions/workflows/go.yml/badge.svg)
+![Go Version](https://img.shields.io/github/go-mod/go-version/schidstorm/s3tool)
+![Release](https://img.shields.io/github/v/release/schidstorm/s3tool)
+
 Terminal-based S3 client for browsing buckets and objects across AWS profiles and S3-compatible endpoints.
 
 ## Features
@@ -69,25 +73,39 @@ Main flags:
 - `--loaders.s3tool`: enable YAML profile loader (default: true)
 - `--loaders.memory`: test-only in-memory loader (hidden)
 
-## Screenshots
-
-![Start page](screens/start_page.png)
-![Buckets page](screens/buckets_page.png)
-![Objects page](screens/objects_page.png)
-
 ## Development
 
 Common commands:
 
 ```bash
-make tests
+make test
+make test-cover
+make lint
+make vet
+make fmt
+make build
 make debug
 make generate-screens
 ```
 
+Integration test setup with MinIO is documented in `docs/INTEGRATION_TESTING.md`.
+
+## Compatibility
+
+See `docs/COMPATIBILITY.md` for supported Go versions and S3-compatible providers.
+
+## Documentation
+
+- Architecture: `docs/ARCHITECTURE.md`
+- Command reference: `docs/COMMANDS.md`
+- Roadmap: `docs/ROADMAP.md`
+- Governance: `docs/GOVERNANCE.md`
+- Release process: `docs/RELEASE_PROCESS.md`
+- Telemetry policy: `docs/TELEMETRY.md`
+
 ## Roadmap
 
-See `OPEN_SOURCE_TODO.md` for open-source hardening and project roadmap items.
+See `TODOS.md` and `docs/ROADMAP.md` for open-source hardening and roadmap items.
 
 ## License
 
