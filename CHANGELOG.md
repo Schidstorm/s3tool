@@ -1,3 +1,9 @@
+## 0.2.1 (2026-04-03)
+
+### Fix
+
+- fixed wrong push command to include tags (#66)
+
 ## 0.2.0 (2026-04-03)
 
 ### Feat
