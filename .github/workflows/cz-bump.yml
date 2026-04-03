@@ -65,4 +65,4 @@ jobs:
 
       - name: Push bump commit and tag
         if: steps.bump.outputs.bumped == 'true'
-        run: git push origin HEAD:main --follow-tags
+        run: git push origin HEAD:main --tags
