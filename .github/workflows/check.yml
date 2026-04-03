@@ -1,4 +1,4 @@
-name: CI
+name: Check
 
 env:
   GOLANGCI_LINT_VERSION: v2.11.4
@@ -38,6 +38,9 @@ jobs:
         with:
           version: ${{ env.GOLANGCI_LINT_VERSION }}
           args: --timeout=5m ./...
+
+      - name: Validate Renovate Config
+        uses: suzuki-shunsuke/github-action-renovate-config-validator@v2.1.0
 
 
 

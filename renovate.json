@@ -4,8 +4,7 @@
   "extends": [
     ":automergeDisabled",
     ":disableDigestUpdates",
-    ":separateMultipleMajorReleases",
-    ":disableMajorUpdates"
+    ":separateMultipleMajorReleases"
   ],
   "minimumReleaseAge": "3 day",
   "enabledManagers": [
