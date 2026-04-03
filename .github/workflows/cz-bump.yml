@@ -1,4 +1,4 @@
-name: PR Merged
+name: CZ-Bump
 
 on:
   pull_request:
