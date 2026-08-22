@@ -7,13 +7,17 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.32.37
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.107.2
 	github.com/aws/smithy-go v1.27.8
-	github.com/gdamore/tcell/v2 v2.13.10
+	github.com/gdamore/tcell/v2 v2.8.1
+	github.com/gdamore/tcell/v3 v3.4.1
 	github.com/rivo/tview v0.42.0
 	github.com/spf13/cobra v1.10.2
 	golang.org/x/image v0.45.0
 )
 
-require go.yaml.in/yaml/v3 v3.0.5 // indirect
+require (
+	github.com/mattn/go-runewidth v0.0.16 // indirect
+	go.yaml.in/yaml/v3 v3.0.5 // indirect
+)
 
 require (
 	github.com/aws/aws-sdk-go-v2/service/signin v1.5.6 // indirect
@@ -44,7 +48,7 @@ require (
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/stretchr/testify v1.12.1
 	golang.org/x/sys v0.47.0 // indirect
-	golang.org/x/term v0.41.0 // indirect
+	golang.org/x/term v0.45.0 // indirect
 	golang.org/x/text v0.41.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1
 )
