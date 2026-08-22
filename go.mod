@@ -13,6 +13,8 @@ require (
 	golang.org/x/image v0.45.0
 )
 
+require go.yaml.in/yaml/v3 v3.0.5 // indirect
+
 require (
 	github.com/aws/aws-sdk-go-v2/service/signin v1.5.6 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -40,7 +42,7 @@ require (
 	github.com/gdamore/encoding v1.0.1 // indirect
 	github.com/lucasb-eyer/go-colorful v1.4.0 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
-	github.com/stretchr/testify v1.12.0
+	github.com/stretchr/testify v1.12.1
 	golang.org/x/sys v0.47.0 // indirect
 	golang.org/x/term v0.41.0 // indirect
 	golang.org/x/text v0.41.0 // indirect
