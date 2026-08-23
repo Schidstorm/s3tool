@@ -1,5 +1,5 @@
 
-GOLANGCI_LINT_VERSION ?= v2.12.2
+GOLANGCI_LINT_VERSION ?= v2.13.0
 
 .PHONY: test test-cover build build-debug debug fmt vet lint lint-install docs-commands create_test_bucket delete_test_bucket generate-screens
 
