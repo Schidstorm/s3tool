@@ -40,7 +40,7 @@ jobs:
           args: --timeout=5m ./...
 
       - name: Validate Renovate Config
-        uses: suzuki-shunsuke/github-action-renovate-config-validator@v2.1.0
+        uses: suzuki-shunsuke/github-action-renovate-config-validator@v2.2.0
 
 
 
